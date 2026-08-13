@@ -11,17 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tour_ratings', function (Blueprint $table) {
-            $table->id('rating_id');
-            $table->unsignedBigInteger('user_id');
+        Schema::create('tour_itineraries', function (Blueprint $table) {
+            $table->id('itinerary_id');
             $table->unsignedBigInteger('tour_id');
-            $table->tinyInteger('score')->unsigned()->comment('1-5');
+            $table->integer('day_number')->comment('ngày thứ mấy: 1, 2, 3...');
+            $table->string('title')->comment('VD: Hà Nội – Sapa');
+            $table->text('description')->nullable();
             $table->datetime('created_at')->useCurrent();
-
-            $table->foreign('user_id')
-                  ->references('user_id')
-                  ->on('users')
-                  ->cascadeOnDelete();
+            $table->datetime('updated_at')->nullable();
 
             $table->foreign('tour_id')
                   ->references('tour_id')
@@ -35,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tour_ratings');
+        Schema::dropIfExists('tour_itineraries');
     }
 };

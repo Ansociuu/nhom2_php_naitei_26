@@ -10,7 +10,7 @@ Tài liệu mô tả cấu trúc cơ sở dữ liệu của hệ thống đặt 
 - [Domain: User](#domain-user)
 - [Domain: Tour](#domain-tour)
 - [Domain: Booking & Payment](#domain-booking--payment)
-- [Domain: Reviews, Ratings & Comments](#domain-reviews-ratings--comments)
+- [Domain: Reviews & Comments](#domain-reviews--comments)
 - [Sơ đồ quan hệ (ERD)](#sơ-đồ-quan-hệ-erd)
 
 ---
@@ -25,7 +25,6 @@ Tài liệu mô tả cấu trúc cơ sở dữ liệu của hệ thống đặt 
 | `tour_status` | `active`, `inactive` |
 | `booking_status` | `pending`, `confirmed`, `cancelled`, `completed` |
 | `payment_status` | `pending`, `success`, `failed`, `refunded` |
-| `review_type` | `place`, `food` |
 | `review_status` | `pending`, `approved`, `rejected` |
 | `post_status` | `draft`, `published` |
 
@@ -106,8 +105,13 @@ Thông tin chính của một chuyến tour.
 | `tour_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
 | `category_id` | `int` | FK → `categories.category_id` (RESTRICT DELETE) | Danh mục tour |
 | `title` | `varchar` | NOT NULL | Tên tour |
-| `price` | `decimal(15,2)` | NOT NULL | Giá tour |
+| `description` | `text` | nullable | Mô tả chi tiết tour |
+| `highlights` | `text` | nullable | Điểm nổi bật |
+| `departure_location` | `varchar` | nullable | Điểm khởi hành |
+| `price` | `decimal(15,2)` | NOT NULL | Giá gốc tour |
 | `duration_days` | `int` | NOT NULL | Số ngày của tour |
+| `included_services` | `text` | nullable | Dịch vụ bao gồm |
+| `excluded_services` | `text` | nullable | Dịch vụ không bao gồm |
 | `status` | `enum` | NOT NULL, default `active` | Trạng thái: `active` / `inactive` |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm tạo |
 | `updated_at` | `datetime` | nullable | Thời điểm cập nhật |
@@ -124,6 +128,25 @@ Lịch khởi hành cụ thể của từng tour.
 | `tour_id` | `int` | FK → `tours.tour_id` (CASCADE DELETE) | Tour tương ứng |
 | `departure_date` | `date` | NOT NULL | Ngày khởi hành |
 | `available_slots` | `int` | NOT NULL | Số chỗ còn trống |
+| `price_override` | `decimal(15,2)` | nullable | Ghi đè giá gốc cho lịch này, `null` = dùng giá gốc từ `tours.price` |
+| `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm tạo |
+| `updated_at` | `datetime` | nullable | Thời điểm cập nhật |
+
+> **Logic ứng dụng**: `final_price = schedule.price_override ?? tour.price`
+
+---
+
+### `tour_itineraries`
+
+Lịch trình chi tiết từng ngày của tour.
+
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|-----|------|-----------|-------|
+| `itinerary_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
+| `tour_id` | `int` | FK → `tours.tour_id` (CASCADE DELETE) | Tour tương ứng |
+| `day_number` | `int` | NOT NULL | Ngày thứ mấy: 1, 2, 3... |
+| `title` | `varchar` | NOT NULL | Tiêu đề ngày (VD: "Hà Nội – Sapa") |
+| `description` | `text` | nullable | Mô tả chi tiết hoạt động trong ngày |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm tạo |
 | `updated_at` | `datetime` | nullable | Thời điểm cập nhật |
 
@@ -186,36 +209,22 @@ Giao dịch thanh toán cho một đơn đặt tour.
 
 ---
 
-## Domain: Reviews, Ratings & Comments
+## Domain: Reviews & Comments
 
 ### `reviews`
 
-Bài đánh giá của người dùng về tour (có kiểm duyệt).
+Bài đánh giá + chấm điểm của người dùng về tour (có kiểm duyệt). Gộp cả review text và rating (1–5 sao) trong cùng một bản ghi.
 
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |-----|------|-----------|-------|
 | `review_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
 | `user_id` | `int` | FK → `users.user_id` (CASCADE DELETE) | Người viết review |
 | `tour_id` | `int` | FK → `tours.tour_id` (CASCADE DELETE) | Tour được đánh giá |
-| `type` | `enum` | NOT NULL | Loại đánh giá: `place` / `food` |
+| `score` | `tinyint unsigned` | nullable | Điểm sao 1–5, nullable nếu chỉ viết review không chấm điểm |
 | `status` | `enum` | NOT NULL, default `pending` | Trạng thái duyệt: `pending` / `approved` / `rejected` |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm viết |
 | `updated_at` | `datetime` | nullable | Thời điểm chỉnh sửa |
 | `approved_at` | `datetime` | nullable | Thời điểm được duyệt |
-
----
-
-### `tour_ratings`
-
-Điểm đánh giá (1–5 sao) của người dùng cho tour.
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| `rating_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
-| `user_id` | `int` | FK → `users.user_id` (CASCADE DELETE) | Người đánh giá |
-| `tour_id` | `int` | FK → `tours.tour_id` (CASCADE DELETE) | Tour được đánh giá |
-| `score` | `tinyint unsigned` | NOT NULL | Điểm sao từ 1 đến 5 |
-| `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm đánh giá |
 
 ---
 
@@ -303,8 +312,13 @@ erDiagram
         int tour_id PK
         int category_id FK
         varchar title
+        text description
+        text highlights
+        varchar departure_location
         decimal price
         int duration_days
+        text included_services
+        text excluded_services
         enum status
     }
     tour_schedules {
@@ -312,6 +326,14 @@ erDiagram
         int tour_id FK
         date departure_date
         int available_slots
+        decimal price_override
+    }
+    tour_itineraries {
+        int itinerary_id PK
+        int tour_id FK
+        int day_number
+        varchar title
+        text description
     }
     tour_images {
         int image_id PK
@@ -342,15 +364,9 @@ erDiagram
         int review_id PK
         int user_id FK
         int tour_id FK
-        enum type
+        tinyint score
         enum status
         datetime approved_at
-    }
-    tour_ratings {
-        int rating_id PK
-        int user_id FK
-        int tour_id FK
-        tinyint score
     }
     review_images {
         int image_id PK
@@ -376,7 +392,6 @@ erDiagram
     users ||--o{ bank_accounts : "has"
     users ||--o{ bookings : "places"
     users ||--o{ reviews : "writes"
-    users ||--o{ tour_ratings : "rates"
     users ||--o{ comments : "writes"
     users ||--o{ review_likes : "likes"
 
@@ -384,9 +399,9 @@ erDiagram
     categories ||--o{ tours : "contains"
 
     tours ||--o{ tour_schedules : "has"
+    tours ||--o{ tour_itineraries : "has"
     tours ||--o{ tour_images : "has"
     tours ||--o{ reviews : "receives"
-    tours ||--o{ tour_ratings : "receives"
 
     tour_schedules ||--o{ bookings : "booked_by"
 

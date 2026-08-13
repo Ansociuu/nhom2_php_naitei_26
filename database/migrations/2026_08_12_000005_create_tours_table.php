@@ -15,8 +15,13 @@ return new class extends Migration
             $table->id('tour_id');
             $table->unsignedBigInteger('category_id');
             $table->string('title');
+            $table->text('description')->nullable();
+            $table->text('highlights')->nullable();
+            $table->string('departure_location')->nullable();
             $table->decimal('price', 15, 2);
             $table->integer('duration_days');
+            $table->text('included_services')->nullable();
+            $table->text('excluded_services')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->datetime('created_at')->useCurrent();
             $table->datetime('updated_at')->nullable();
