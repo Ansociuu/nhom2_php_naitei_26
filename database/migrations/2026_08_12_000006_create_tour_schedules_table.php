@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('tour_id');
             $table->date('departure_date');
             $table->integer('available_slots');
+            $table->decimal('price_override', 15, 2)->nullable()->comment('ghi đè giá gốc của tour, null = dùng giá gốc');
             $table->datetime('created_at')->useCurrent();
             $table->datetime('updated_at')->nullable();
 

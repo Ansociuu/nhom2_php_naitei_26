@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('review_id');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('tour_id');
-            $table->enum('type', ['place', 'food']);
+            $table->tinyInteger('score')->unsigned()->nullable()->comment('1-5, nullable nếu chỉ viết review không chấm điểm');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->datetime('created_at')->useCurrent();
             $table->datetime('updated_at')->nullable();
