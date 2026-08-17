@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -18,6 +19,8 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
 
+    protected $table = 'users';
+
     protected $primaryKey = 'user_id';
 
     /**
@@ -25,24 +28,18 @@ class User extends Authenticatable
      */
     protected $rememberTokenName = '';
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
+
     protected function casts(): array
     {
         return [
             'password_hash' => 'hashed',
             'last_login_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Cột lưu mật khẩu của schema là password_hash thay vì password.
-     */
-    public function getAuthPasswordName(): string
-    {
-        return 'password_hash';
     }
 }
