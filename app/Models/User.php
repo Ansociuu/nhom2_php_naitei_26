@@ -2,31 +2,99 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
+
+    protected $table = 'users';
+
+    protected $primaryKey = 'user_id';
+
+    //protected $keyType = 'int';
+
+    //public $incrementing = true;
+
+    protected $fillable = [
+        'username',
+        'email',
+        'password_hash',
+        'role',
+        'status',
+        'last_login_at',
+    ];
+
+    protected $hidden = [
+        'password_hash',
+    ];
+
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password_hash' => 'hashed',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    //Tên cột password dùng cho Laravel Authentication vì Laravel nhận diện password không phải password_hash
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
+    public function getAuthPassword(): string
+    {
+        return $this->password_hash;
+    }
+
+    // Relationships
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class, 'user_id', 'user_id');
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class, 'user_id', 'user_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'user_id', 'user_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'user_id', 'user_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'user_id', 'user_id');
+    }
+
+    public function reviewLikes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Review::class,
+            'review_likes',
+            'user_id',
+            'review_id',
+            'user_id',
+            'review_id'
+        )->withPivot('liked_at');
     }
 }
