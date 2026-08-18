@@ -35,4 +35,29 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | OAuth Providers (Socialite)
+    |--------------------------------------------------------------------------
+    */
+
+    'facebook' => [
+        'client_id'     => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect'      => env('FACEBOOK_REDIRECT'),
+    ],
+
+    // Twitter uses OAuth 2.0 — use driver 'twitter-oauth-2' in Socialite
+    'twitter-oauth-2' => [
+        'client_id'     => env('TWITTER_CLIENT_ID'),
+        'client_secret' => env('TWITTER_CLIENT_SECRET'),
+        'redirect'      => env('TWITTER_REDIRECT'),
+    ],
+
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT'),
+    ],
+
 ];

@@ -25,19 +25,21 @@
     21 => 'Illuminate\\Translation\\TranslationServiceProvider',
     22 => 'Illuminate\\Validation\\ValidationServiceProvider',
     23 => 'Illuminate\\View\\ViewServiceProvider',
-    24 => 'Laravel\\Pail\\PailServiceProvider',
-    25 => 'Laravel\\Pao\\Laravel\\ServiceProvider',
-    26 => 'Laravel\\Sentinel\\SentinelServiceProvider',
-    27 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    28 => 'Laravel\\Telescope\\TelescopeServiceProvider',
-    29 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    30 => 'Carbon\\Laravel\\ServiceProvider',
-    31 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    32 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    33 => 'Spatie\\MediaLibrary\\MediaLibraryServiceProvider',
-    34 => 'Spatie\\Permission\\PermissionServiceProvider',
-    35 => 'App\\Providers\\AppServiceProvider',
-    36 => 'App\\Providers\\TelescopeServiceProvider',
+    24 => 'Laravel\\Breeze\\BreezeServiceProvider',
+    25 => 'Laravel\\Pail\\PailServiceProvider',
+    26 => 'Laravel\\Pao\\Laravel\\ServiceProvider',
+    27 => 'Laravel\\Sentinel\\SentinelServiceProvider',
+    28 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    29 => 'Laravel\\Telescope\\TelescopeServiceProvider',
+    30 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    31 => 'Carbon\\Laravel\\ServiceProvider',
+    32 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    33 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    34 => 'Pest\\Laravel\\PestServiceProvider',
+    35 => 'Spatie\\MediaLibrary\\MediaLibraryServiceProvider',
+    36 => 'Spatie\\Permission\\PermissionServiceProvider',
+    37 => 'App\\Providers\\AppServiceProvider',
+    38 => 'App\\Providers\\TelescopeServiceProvider',
   ),
   'eager' => 
   array (
@@ -58,10 +60,11 @@
     14 => 'Carbon\\Laravel\\ServiceProvider',
     15 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     16 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    17 => 'Spatie\\MediaLibrary\\MediaLibraryServiceProvider',
-    18 => 'Spatie\\Permission\\PermissionServiceProvider',
-    19 => 'App\\Providers\\AppServiceProvider',
-    20 => 'App\\Providers\\TelescopeServiceProvider',
+    17 => 'Pest\\Laravel\\PestServiceProvider',
+    18 => 'Spatie\\MediaLibrary\\MediaLibraryServiceProvider',
+    19 => 'Spatie\\Permission\\PermissionServiceProvider',
+    20 => 'App\\Providers\\AppServiceProvider',
+    21 => 'App\\Providers\\TelescopeServiceProvider',
   ),
   'deferred' => 
   array (
@@ -225,6 +228,7 @@
     'validator' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'validation.presence' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'Illuminate\\Contracts\\Validation\\UncompromisedVerifier' => 'Illuminate\\Validation\\ValidationServiceProvider',
+    'Laravel\\Breeze\\Console\\InstallCommand' => 'Laravel\\Breeze\\BreezeServiceProvider',
     'Laravel\\Socialite\\Contracts\\Factory' => 'Laravel\\Socialite\\SocialiteServiceProvider',
     'command.tinker' => 'Laravel\\Tinker\\TinkerServiceProvider',
   ),
@@ -270,6 +274,9 @@
     array (
     ),
     'Illuminate\\Validation\\ValidationServiceProvider' => 
+    array (
+    ),
+    'Laravel\\Breeze\\BreezeServiceProvider' => 
     array (
     ),
     'Laravel\\Socialite\\SocialiteServiceProvider' => 
