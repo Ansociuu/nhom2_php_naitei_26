@@ -59,16 +59,7 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Social OAuth Routes (Socialite — Facebook, Twitter, Google)
-|--------------------------------------------------------------------------
-| These are public routes — Socialite handles its own redirect/callback.
-| Supported {provider} values: facebook, twitter-oauth-2, google
-|
-| Example login buttons in Blade:
-|   <a href="{{ route('social.redirect', 'google') }}">Login with Google</a>
-*/
+
 Route::get('auth/{provider}', [SocialAuthController::class, 'redirect'])
     ->name('social.redirect')
     ->whereIn('provider', ['facebook', 'twitter-oauth-2', 'google']);
