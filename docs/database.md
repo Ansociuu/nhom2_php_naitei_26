@@ -2,6 +2,8 @@
 
 Tài liệu mô tả cấu trúc cơ sở dữ liệu của hệ thống đặt tour du lịch.
 
+Hệ quản trị: **MySQL 8+**, engine InnoDB, charset `utf8mb4` / collation `utf8mb4_unicode_ci`.
+
 ---
 
 ## Mục lục
@@ -11,6 +13,8 @@ Tài liệu mô tả cấu trúc cơ sở dữ liệu của hệ thống đặt 
 - [Domain: Tour](#domain-tour)
 - [Domain: Booking & Payment](#domain-booking--payment)
 - [Domain: Reviews & Comments](#domain-reviews--comments)
+- [Ràng buộc UNIQUE & Index](#ràng-buộc-unique--index)
+- [Bảng hạ tầng](#bảng-hạ-tầng)
 - [Sơ đồ quan hệ (ERD)](#sơ-đồ-quan-hệ-erd)
 
 ---
@@ -183,6 +187,9 @@ Lịch trình chi tiết từng ngày của tour.
 | `booking_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
 | `user_id` | `int` | FK → `users.user_id` (RESTRICT DELETE) | Người đặt tour |
 | `schedule_id` | `int` | FK → `tour_schedules.schedule_id` (RESTRICT DELETE) | Lịch khởi hành được đặt |
+| `num_adults` | `int unsigned` | NOT NULL, default `1` | Số khách người lớn |
+| `num_children` | `int unsigned` | NOT NULL, default `0` | Số khách trẻ em |
+| `unit_price` | `decimal(15,2)` | NOT NULL, default `0` | Giá 1 khách chốt lúc đặt, giữ nguyên kể cả khi tour đổi giá |
 | `total_amount` | `decimal(15,2)` | NOT NULL | Tổng tiền của đơn |
 | `status` | `enum` | NOT NULL, default `pending` | Trạng thái: `pending` / `confirmed` / `cancelled` / `completed` |
 | `booked_at` | `datetime` | NOT NULL, default `now()` | Thời điểm đặt |
@@ -199,13 +206,15 @@ Giao dịch thanh toán cho một đơn đặt tour.
 | Cột | Kiểu | Ràng buộc | Mô tả |
 |-----|------|-----------|-------|
 | `payment_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
-| `booking_id` | `int` | FK → `bookings.booking_id` (CASCADE DELETE) | Đơn đặt tương ứng |
+| `booking_id` | `int` | FK → `bookings.booking_id` (RESTRICT DELETE) | Đơn đặt tương ứng |
 | `amount` | `decimal(15,2)` | NOT NULL | Số tiền thanh toán |
 | `status` | `enum` | NOT NULL, default `pending` | Trạng thái: `pending` / `success` / `failed` / `refunded` |
 | `gateway` | `varchar` | NOT NULL | Cổng thanh toán: vnpay / onepay / napas / ... |
 | `gateway_txn_id` | `varchar` | nullable | Mã giao dịch phía cổng thanh toán, dùng để đối soát |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm khởi tạo thanh toán |
 | `paid_at` | `datetime` | nullable | Thời điểm thanh toán thành công |
+
+> **Không dùng CASCADE DELETE**: lịch sử giao dịch tiền phải được giữ lại, muốn xoá booking thì phải xử lý payments trước.
 
 ---
 
@@ -220,7 +229,8 @@ Bài đánh giá + chấm điểm của người dùng về tour (có kiểm duy
 | `review_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
 | `user_id` | `int` | FK → `users.user_id` (CASCADE DELETE) | Người viết review |
 | `tour_id` | `int` | FK → `tours.tour_id` (CASCADE DELETE) | Tour được đánh giá |
-| `score` | `tinyint unsigned` | nullable | Điểm sao 1–5, nullable nếu chỉ viết review không chấm điểm |
+| `content` | `text` | nullable | Nội dung bài đánh giá |
+| `score` | `tinyint unsigned` | nullable, CHECK 1–5 | Điểm sao 1–5, nullable nếu chỉ viết review không chấm điểm |
 | `status` | `enum` | NOT NULL, default `pending` | Trạng thái duyệt: `pending` / `approved` / `rejected` |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm viết |
 | `updated_at` | `datetime` | nullable | Thời điểm chỉnh sửa |
@@ -274,6 +284,62 @@ Lượt thích của người dùng cho bài review (composite PK).
 | `liked_at` | `datetime` | NOT NULL, default `now()` | Thời điểm thích |
 
 > **Composite Primary Key**: `(user_id, review_id)` — đảm bảo mỗi người chỉ like một review một lần.
+
+---
+
+## Ràng buộc UNIQUE & Index
+
+Các cột khóa ngoại đã được InnoDB tự đánh index nên không liệt kê lại ở đây.
+
+### UNIQUE
+
+| Bảng | Cột | Lý do |
+|------|-----|-------|
+| `users` | `email` | Định danh đăng nhập |
+| `users` | `username` | Định danh đăng nhập |
+| `social_accounts` | `(provider, provider_user_id)` | Chặn hai tài khoản khác nhau cùng liên kết tới một tài khoản mạng xã hội |
+| `payments` | `(gateway, gateway_txn_id)` | Chặn ghi nhận trùng khi cổng thanh toán gọi callback/IPN nhiều lần |
+| `tour_schedules` | `(tour_id, departure_date)` | Một tour chỉ có một lịch cho mỗi ngày khởi hành |
+| `tour_itineraries` | `(tour_id, day_number)` | Không trùng "ngày thứ N" trong cùng một tour |
+| `reviews` | `(user_id, tour_id)` | Mỗi user chỉ đánh giá một tour một lần |
+| `review_likes` | `(user_id, review_id)` | Composite PK, mỗi user chỉ like một review một lần |
+
+### CHECK
+
+| Constraint | Bảng | Điều kiện |
+|------------|------|-----------|
+| `chk_reviews_score` | `reviews` | `score BETWEEN 1 AND 5` (NULL vẫn hợp lệ) |
+| `chk_bookings_num_adults` | `bookings` | `num_adults >= 1` |
+| `chk_itineraries_day_number` | `tour_itineraries` | `day_number >= 1` |
+
+### Index
+
+| Bảng | Cột | Phục vụ |
+|------|-----|---------|
+| `tours` | `(category_id, status)` | Danh sách tour lọc theo danh mục + trạng thái |
+| `tour_schedules` | `departure_date` | Tìm tour theo ngày khởi hành |
+| `tour_images` | `(tour_id, display_order)` | Lấy gallery theo đúng thứ tự |
+| `bookings` | `(user_id, status)` | Lịch sử đặt tour của user |
+| `bookings` | `status` | Màn hình quản lý đơn của admin |
+| `reviews` | `(tour_id, status)` | Lấy review đã duyệt của một tour |
+
+---
+
+## Bảng hạ tầng
+
+Các bảng mặc định của Laravel, không thuộc nghiệp vụ. Bắt buộc phải có vì `.env` dùng
+`database` driver cho cache / session / queue.
+
+| Bảng | Dùng cho |
+|------|----------|
+| `password_reset_tokens` | Chức năng quên mật khẩu |
+| `sessions` | `SESSION_DRIVER=database` |
+| `cache`, `cache_locks` | `CACHE_STORE=database` (Spatie Permission cũng cache role/permission ở đây) |
+| `jobs`, `job_batches`, `failed_jobs` | `QUEUE_CONNECTION=database` |
+| `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions` | Package `spatie/laravel-permission` |
+
+> **Lưu ý phân quyền**: role tồn tại ở hai nơi — cột `users.role` (enum, theo thiết kế DB)
+> và bảng `roles` của Spatie. `UserSeeder` set đồng bộ cả hai.
 
 ---
 
@@ -347,6 +413,9 @@ erDiagram
         int booking_id PK
         int user_id FK
         int schedule_id FK
+        int num_adults
+        int num_children
+        decimal unit_price
         decimal total_amount
         enum status
         datetime booked_at
@@ -364,6 +433,7 @@ erDiagram
         int review_id PK
         int user_id FK
         int tour_id FK
+        text content
         tinyint score
         enum status
         datetime approved_at
