@@ -3,28 +3,33 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
-
-    protected static function newFactory()
-    {
-        return UserFactory::new();
-    }
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasRoles, Notifiable;
 
     protected $table = 'users';
 
     protected $primaryKey = 'user_id';
 
-    //protected $keyType = 'int';
+    /**
+     * Bảng users không có cột remember_token nên tắt tính năng "remember me".
+     */
+    protected $rememberTokenName = '';
 
-    //public $incrementing = true;
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
 
     protected $fillable = [
         'username',
@@ -38,7 +43,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password_hash',
     ];
-
+    
     protected function casts(): array
     {
         return [
@@ -48,7 +53,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
         ];
     }
-
+    
     //Tên cột password dùng cho Laravel Authentication vì Laravel nhận diện password không phải password_hash
     public function getAuthPasswordName(): string
     {
