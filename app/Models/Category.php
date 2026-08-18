@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['parent_id', 'name'])]
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
@@ -19,6 +18,11 @@ class Category extends Model
 
     protected $primaryKey = 'category_id';
 
+    protected $fillable = [
+        'parent_id',
+        'name',
+    ];
+    
     protected function casts(): array
     {
         return [
