@@ -12,8 +12,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['username', 'email', 'password_hash', 'role', 'status', 'last_login_at'])]
-#[Hidden(['password_hash'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -33,13 +31,75 @@ class User extends Authenticatable
         return UserFactory::new();
     }
 
+    protected $fillable = [
+        'username',
+        'email',
+        'password_hash',
+        'role',
+        'status',
+        'last_login_at',
+    ];
+
+    protected $hidden = [
+        'password_hash',
+    ];
+    
     protected function casts(): array
     {
         return [
             'password_hash' => 'hashed',
-            'last_login_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
+    }
+    
+    //Tên cột password dùng cho Laravel Authentication vì Laravel nhận diện password không phải password_hash
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
+    public function getAuthPassword(): string
+    {
+        return $this->password_hash;
+    }
+
+    // Relationships
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class, 'user_id', 'user_id');
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class, 'user_id', 'user_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'user_id', 'user_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'user_id', 'user_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'user_id', 'user_id');
+    }
+
+    public function reviewLikes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Review::class,
+            'review_likes',
+            'user_id',
+            'review_id',
+            'user_id',
+            'review_id'
+        )->withPivot('liked_at');
     }
 }
