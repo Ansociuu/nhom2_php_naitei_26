@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BankAccountUpdateRequest;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,13 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user'           => $user,
+            'bankAccount'    => $user->bankAccounts()->first(),
+            'banks'          => config('banks.list'),
+            'socialAccounts' => $user->socialAccounts()->get(),
         ]);
     }
 
@@ -35,6 +41,25 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update or create the user's bank account.
+     */
+    public function updateBankAccount(BankAccountUpdateRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $user->bankAccounts()->updateOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'bank_name'           => $request->validated('bank_name'),
+                'account_number'      => $request->validated('account_number'),
+                'account_holder_name' => mb_strtoupper($request->validated('account_holder_name')),
+            ]
+        );
+
+        return Redirect::route('profile.edit')->with('status', 'bank-account-updated');
     }
 
     /**
