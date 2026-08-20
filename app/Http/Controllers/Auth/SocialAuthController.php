@@ -30,8 +30,9 @@ class SocialAuthController extends Controller
     {
         try {
             $socialUser = Socialite::driver($provider)->user();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // User denied access or provider returned an error
+            error_log('Social login error for provider ' . $provider . ': ' . $e->getMessage());
             return redirect()->route('login')
                 ->withErrors(['email' => __('Social login failed or was cancelled. Please try again.')]);
         }
@@ -58,7 +59,7 @@ class SocialAuthController extends Controller
             $user = User::create([
                 'username'  => $this->generateUniqueUsername($socialUser->getName()),
                 'email'     => $email ?? $provider . '_' . $socialUser->getId() . '@placeholder.local',
-                'password_hash' => null, // Social-only accounts have no local password
+                'password_hash' =>  'password', // Default-password;
                 'status'    => 'active',
             ]);
 
@@ -68,7 +69,7 @@ class SocialAuthController extends Controller
         // 4. Link this provider to the user
         SocialAccount::create([
             'user_id'          => $user->user_id,
-            'provider'         => $provider,
+            'provider'         => ($provider === 'twitter-oauth-2') ? 'twitter' : ($provider === 'google' ? 'google' : 'fb')   ,
             'provider_user_id' => $socialUser->getId(),
             'linked_at'        => now(),
         ]);
