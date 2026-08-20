@@ -15,6 +15,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if(Auth::user()?->hasRole('admin'))
+                        <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">
+                            {{ __('Danh mục') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.tours.index')" :active="request()->routeIs('admin.tours.*')">
+                            {{ __('Tour Du lịch') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
