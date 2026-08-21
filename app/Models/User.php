@@ -61,27 +61,33 @@ class User extends Authenticatable
     {
         return $this->password_hash;
     }
+
     // Relationships
     public function socialAccounts(): HasMany
     {
         return $this->hasMany(SocialAccount::class, 'user_id', 'user_id');
     }
+
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(BankAccount::class, 'user_id', 'user_id');
     }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'user_id', 'user_id');
     }
+
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class, 'user_id', 'user_id');
     }
+
     public function reviewLikes(): BelongsToMany
     {
         return $this->belongsToMany(
