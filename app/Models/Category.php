@@ -15,7 +15,17 @@ class Category extends Model
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 
+    protected $table = 'categories';
+
     protected $primaryKey = 'category_id';
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+    }
 
     public function parent(): BelongsTo
     {
