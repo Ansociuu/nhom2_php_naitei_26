@@ -40,6 +40,7 @@ class RegisteredUserController extends Controller
             'password_hash' => $request->password, // cast to 'hashed' in User model
         ]);
 
+        \Spatie\Permission\Models\Role::findOrCreate('user', 'web');
         $user->assignRole('user');
 
         event(new Registered($user));
