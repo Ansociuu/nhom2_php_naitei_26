@@ -19,12 +19,19 @@ class Tour extends Model
     protected $primaryKey = 'tour_id';
     protected $fillable = [
         'category_id',
+        'region',
+        'province',
         'title',
         'description',
         'highlights',
         'departure_location',
         'price',
         'duration_days',
+        'duration_label',
+        'difficulty',
+        'peak_elevation',
+        'elevation_gain',
+        'distance_km',
         'included_services',
         'excluded_services',
         'status',
@@ -37,6 +44,10 @@ class Tour extends Model
         return [
             'price' => 'decimal:2',
             'duration_days' => 'integer',
+            'difficulty' => 'integer',
+            'peak_elevation' => 'integer',
+            'elevation_gain' => 'integer',
+            'distance_km' => 'decimal:2',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -65,5 +76,32 @@ class Tour extends Model
     public function images(): HasMany
     {
         return $this->hasMany(TourImage::class, 'tour_id', 'tour_id');
+    }
+
+    public function ticketTypes(): HasMany
+    {
+        return $this->hasMany(TicketType::class, 'tour_id', 'tour_id');
+    }
+
+    public function coverImageUrl(): ?string
+    {
+        return ($this->images->firstWhere('is_cover', true) ?? $this->images->first())?->url();
+    }
+
+    public function cheapestTicketType(): ?TicketType
+    {
+        return $this->ticketTypes->sortBy('price')->first();
+    }
+
+    public function difficultyLabel(): ?string
+    {
+        return match ($this->difficulty) {
+            1 => 'Rất dễ',
+            2 => 'Dễ',
+            3 => 'Trung bình',
+            4 => 'Khó',
+            5 => 'Rất khó',
+            default => null,
+        };
     }
 }
