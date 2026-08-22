@@ -91,11 +91,11 @@
                                 @foreach($tour->schedules as $sch)
                                     <tr class="border-b dark:border-gray-700">
                                         <td class="px-4 py-2 font-mono text-xs">{{ $sch->schedule_id }}</td>
-                                        <td class="px-4 py-2">{{ $sch->start_date }}</td>
-                                        <td class="px-4 py-2">{{ $sch->end_date }}</td>
+                                        <td class="px-4 py-2">{{ $sch->departure_date ? \Carbon\Carbon::parse($sch->departure_date)->format('d/m/Y') : '—' }}</td>
+                                        <td class="px-4 py-2">{{ $sch->departure_date ? \Carbon\Carbon::parse($sch->departure_date)->addDays(max(0, $tour->duration_days - 1))->format('d/m/Y') : '—' }}</td>
                                         <td class="px-4 py-2 font-bold">{{ $sch->available_slots }}</td>
                                         <td class="px-4 py-2 font-semibold text-emerald-600 dark:text-emerald-400">
-                                            {{ number_format($sch->price ?? $tour->price, 0, ',', '.') }} đ
+                                            {{ number_format($sch->price_override ?? $tour->price, 0, ',', '.') }} đ
                                         </td>
                                     </tr>
                                 @endforeach

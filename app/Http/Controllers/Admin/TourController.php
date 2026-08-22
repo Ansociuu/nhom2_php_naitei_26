@@ -82,6 +82,11 @@ class TourController extends Controller
 
     public function destroy(Tour $tour): RedirectResponse
     {
+        if ($tour->schedules()->whereHas('bookings')->exists()) {
+            return redirect()->back()
+                ->with('error', 'Không thể xóa Tour này vì đã có khách đặt chỗ.');
+        }
+
         DB::transaction(function () use ($tour) {
             $tour->itineraries()->delete();
             $tour->images()->delete();

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Tour extends Model
 {
@@ -17,6 +18,11 @@ class Tour extends Model
     protected $table = 'tours';
 
     protected $primaryKey = 'tour_id';
+
+    public function getRouteKeyName(): string
+    {
+        return 'tour_id';
+    }
 
     protected $fillable = [
         'category_id',
@@ -67,5 +73,17 @@ class Tour extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'tour_id', 'tour_id');
+    }
+
+    public function bookings(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            TourSchedule::class,
+            'tour_id', 
+            'schedule_id',
+            'tour_id', 
+            'schedule_id'
+        );
     }
 }

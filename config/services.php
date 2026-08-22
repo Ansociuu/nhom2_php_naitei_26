@@ -60,4 +60,8 @@ return [
         'redirect'      => env('GOOGLE_REDIRECT'),
     ],
 
+    'payment' => [
+        'scan_base_url' => env('PAYMENT_SCAN_BASE_URL', 'https://gating-satirical-refinery.ngrok-free.dev'),
+    ],
+
 ];

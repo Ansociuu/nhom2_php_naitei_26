@@ -11,16 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id('payment_id');
+        Schema::create('booking_details', function (Blueprint $table) {
+            $table->id('booking_detail_id');
             $table->unsignedBigInteger('booking_id');
-            $table->decimal('amount', 15, 2);
-            $table->enum('status', ['pending', 'success', 'failed', 'refunded'])->default('pending');
-            $table->string('gateway')->comment('vnpay/onepay/napas/...');
-            $table->string('gateway_txn_id')->nullable()->comment('mã giao dịch phía cổng thanh toán, dùng để đối soát');
+            $table->string('name')->comment('họ và tên khách');
+            $table->unsignedTinyInteger('age')->comment('tuổi');
+            $table->decimal('price', 15, 2)->comment('giá vé áp dụng cho khách này');
             $table->datetime('created_at')->useCurrent();
-            $table->datetime('paid_at')->nullable();
-            $table->datetime('expire_at')->nullable();
 
             $table->foreign('booking_id')
                   ->references('booking_id')
@@ -34,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('booking_details');
     }
 };
