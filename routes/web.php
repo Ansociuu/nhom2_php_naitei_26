@@ -4,6 +4,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Admin\TourImageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 });
 
-// Real-time Payment Status Polling (API)
+// Payment
 Route::get('/payments/{txn}/status', [PaymentController::class, 'status'])->name('payments.status');
 
 // Public Mobile QR Code Scan Endpoint
@@ -55,7 +56,13 @@ Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('tours', TourController::class);
+
+     // Tour Images
+    Route::post('tours/{tour}/images', [TourImageController::class, 'store'])->name('tours.images.store');
+    Route::patch('tours/{tour}/images/{image}/cover', [TourImageController::class, 'setCover'])->name('tours.images.cover');
+    Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
 });
+
 
 require __DIR__.'/auth.php';
 
