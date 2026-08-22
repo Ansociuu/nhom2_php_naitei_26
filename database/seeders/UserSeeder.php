@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -17,7 +18,11 @@ class UserSeeder extends Seeder
 
     public function run(): void
     {
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('user', 'web');
+
         $admin = User::firstOrCreate(
+
             ['email' => self::ADMIN_EMAIL],
             UserFactory::new()->admin()->raw([
                 'username' => 'admin',
