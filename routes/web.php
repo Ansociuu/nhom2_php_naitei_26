@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\TourImageController;
+use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\Admin\TourScheduleController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('tours/{tour}/images', [TourImageController::class, 'store'])->name('tours.images.store');
     Route::patch('tours/{tour}/images/{image}/cover', [TourImageController::class, 'setCover'])->name('tours.images.cover');
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
+
+    // Tour Itineraries
+    Route::post('tours/{tour}/itineraries', [TourItineraryController::class, 'store'])->name('tours.itineraries.store');
+    Route::put('tours/{tour}/itineraries/{itinerary}', [TourItineraryController::class, 'update'])->name('tours.itineraries.update');
+    Route::delete('tours/{tour}/itineraries/{itinerary}', [TourItineraryController::class, 'destroy'])->name('tours.itineraries.destroy');
+
+    // Tour Schedules
+    Route::post('tours/{tour}/schedules', [TourScheduleController::class, 'store'])->name('tours.schedules.store');
+    Route::put('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'update'])->name('tours.schedules.update');
+    Route::delete('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'destroy'])->name('tours.schedules.destroy');
 });
 
 
