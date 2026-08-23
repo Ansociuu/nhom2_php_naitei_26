@@ -64,6 +64,44 @@
         }
       }
     },
+    "/auth/social/{provider}/redirect": {
+      "get": {
+        "summary": "Lấy URL điều hướng đăng nhập tài khoản mạng xã hội (google, facebook, twitter)",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string", "enum": ["google", "facebook", "twitter"] } }
+        ],
+        "responses": {
+          "200": { "description": "Trả về redirect_url chuyển hướng người dùng đăng nhập OAuth" },
+          "422": { "description": "Nhà cung cấp không hợp lệ" }
+        }
+      }
+    },
+    "/auth/social/{provider}/callback": {
+      "post": {
+        "summary": "Xác thực Callback/Token từ mạng xã hội, đăng ký/đăng nhập User và cấp Sanctum Bearer Token",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string", "enum": ["google", "facebook", "twitter"] } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "access_token": { "type": "string", "example": "ya29.a0..." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, trả về access_token và thông tin người dùng" },
+          "400": { "description": "Xác thực với mạng xã hội thất bại" },
+          "403": { "description": "Tài khoản người dùng đã bị khóa" }
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "summary": "Lấy thông tin tài khoản đang đăng nhập",
@@ -436,6 +474,32 @@
         "responses": {
           "200": { "description": "Toggle thích/bỏ thích thành công, trả về trạng thái is_liked và tổng lượt thích" },
           "403": { "description": "Bài đánh giá chưa được duyệt" }
+        }
+      }
+    },
+    "/reviews/{review_id}": {
+      "delete": {
+        "summary": "Xóa bài đánh giá của chính tôi và dọn dẹp các hình ảnh liên quan",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Xóa bài đánh giá thành công" },
+          "403": { "description": "Không có quyền xóa bài đánh giá này" }
+        }
+      }
+    },
+    "/comments/{comment_id}": {
+      "delete": {
+        "summary": "Xóa bình luận của chính tôi",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "comment_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Xóa bình luận thành công" },
+          "403": { "description": "Không có quyền xóa bình luận này" }
         }
       }
     }

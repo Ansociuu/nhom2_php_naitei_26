@@ -196,4 +196,32 @@ class ReviewController extends Controller
             'likes_count' => $likesCount,
         ]);
     }
+
+    /**
+     * Delete the authenticated user's own review.
+     */
+    public function destroy(Request $request, Review $review): JsonResponse
+    {
+        if ($review->user_id !== $request->user()->user_id) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Bạn không có quyền xóa bài đánh giá này.',
+            ], 403);
+        }
+
+        $review->loadMissing('images');
+
+        foreach ($review->images as $image) {
+            if (! empty($image->cloudinary_public_id)) {
+                $this->cloudinaryService->delete($image->cloudinary_public_id);
+            }
+        }
+
+        $review->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Đã xóa bài đánh giá của bạn.',
+        ]);
+    }
 }

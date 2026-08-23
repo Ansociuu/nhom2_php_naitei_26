@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\SocialAuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CommentController;
@@ -15,6 +16,11 @@ Route::prefix('v1')->group(function () {
         // Public Auth Routes
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+
+        // Social Auth Routes
+        Route::get('/social/{provider}/redirect', [SocialAuthController::class, 'redirect']);
+        Route::get('/social/{provider}/callback', [SocialAuthController::class, 'callback']);
+        Route::post('/social/{provider}/callback', [SocialAuthController::class, 'callback']);
 
         // Protected Auth Routes (Require Bearer Token)
         Route::middleware('auth:sanctum')->group(function () {
@@ -55,7 +61,9 @@ Route::prefix('v1')->group(function () {
         // Review & Interactivity API
         Route::get('/reviews/my-reviews', [ReviewController::class, 'myReviews']);
         Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
+        Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
         Route::post('/reviews/{review}/comments', [CommentController::class, 'store']);
+        Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
         Route::post('/reviews/{review}/like', [ReviewController::class, 'toggleLike']);
     });
 });

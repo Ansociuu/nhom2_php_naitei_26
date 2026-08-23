@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreTourRequest;
 use App\Http\Requests\Admin\UpdateTourRequest;
 use App\Models\Category;
 use App\Models\Tour;
+use App\Services\CloudinaryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,13 @@ use Illuminate\View\View;
 
 class TourController extends Controller
 {
+    protected CloudinaryService $cloudinaryService;
+
+    public function __construct(CloudinaryService $cloudinaryService)
+    {
+        $this->cloudinaryService = $cloudinaryService;
+    }
+
     public function index(Request $request): View
     {
         $query = Tour::with(['category']);
@@ -88,6 +96,14 @@ class TourController extends Controller
         }
 
         DB::transaction(function () use ($tour) {
+            $tour->loadMissing('images');
+
+            foreach ($tour->images as $image) {
+                if (! empty($image->cloudinary_public_id)) {
+                    $this->cloudinaryService->delete($image->cloudinary_public_id);
+                }
+            }
+
             $tour->itineraries()->delete();
             $tour->images()->delete();
             $tour->schedules()->delete();

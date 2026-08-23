@@ -201,3 +201,56 @@ test('user can toggle like and unlike on approved review via API', function () {
         'user_id'   => $user->user_id,
     ]);
 });
+
+test('user can delete their own review via API', function () {
+    $category = Category::factory()->create();
+    $tour = Tour::factory()->create(['category_id' => $category->category_id]);
+    $user = User::factory()->create();
+
+    $review = Review::create([
+        'user_id' => $user->user_id,
+        'tour_id' => $tour->tour_id,
+        'score'   => 4,
+        'content' => 'Bài đánh giá muốn xóa sau này',
+        'status'  => 'pending',
+    ]);
+
+    $response = $this->actingAs($user)->deleteJson("/api/v1/reviews/{$review->review_id}");
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'status'  => 'success',
+            'message' => 'Đã xóa bài đánh giá của bạn.',
+        ]);
+
+    $this->assertDatabaseMissing('reviews', [
+        'review_id' => $review->review_id,
+    ]);
+});
+
+test('user cannot delete another user review via API', function () {
+    $category = Category::factory()->create();
+    $tour = Tour::factory()->create(['category_id' => $category->category_id]);
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $review = Review::create([
+        'user_id' => $owner->user_id,
+        'tour_id' => $tour->tour_id,
+        'score'   => 5,
+        'content' => 'Bài viết của người khác',
+        'status'  => 'approved',
+    ]);
+
+    $response = $this->actingAs($otherUser)->deleteJson("/api/v1/reviews/{$review->review_id}");
+
+    $response->assertStatus(403)
+        ->assertJson([
+            'status'  => 'error',
+            'message' => 'Bạn không có quyền xóa bài đánh giá này.',
+        ]);
+
+    $this->assertDatabaseHas('reviews', [
+        'review_id' => $review->review_id,
+    ]);
+});

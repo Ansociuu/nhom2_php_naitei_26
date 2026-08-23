@@ -91,3 +91,70 @@ test('user can comment and reply to a comment on an approved review via API', fu
         'parent_comment_id' => $parentCommentId,
     ]);
 });
+
+test('user can delete their own comment via API', function () {
+    $category = Category::factory()->create();
+    $tour = Tour::factory()->create(['category_id' => $category->category_id]);
+    $user = User::factory()->create();
+
+    $review = Review::create([
+        'user_id'     => $user->user_id,
+        'tour_id'     => $tour->tour_id,
+        'score'       => 5,
+        'content'     => 'Bài viết đã duyệt',
+        'status'      => 'approved',
+        'approved_at' => now(),
+    ]);
+
+    $comment = Comment::create([
+        'review_id' => $review->review_id,
+        'user_id'   => $user->user_id,
+        'content'   => 'Bình luận sắp xóa',
+    ]);
+
+    $response = $this->actingAs($user)->deleteJson("/api/v1/comments/{$comment->comment_id}");
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'status'  => 'success',
+            'message' => 'Đã xóa bình luận của bạn.',
+        ]);
+
+    $this->assertDatabaseMissing('comments', [
+        'comment_id' => $comment->comment_id,
+    ]);
+});
+
+test('user cannot delete another user comment via API', function () {
+    $category = Category::factory()->create();
+    $tour = Tour::factory()->create(['category_id' => $category->category_id]);
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $review = Review::create([
+        'user_id'     => $owner->user_id,
+        'tour_id'     => $tour->tour_id,
+        'score'       => 5,
+        'content'     => 'Bài viết đã duyệt',
+        'status'      => 'approved',
+        'approved_at' => now(),
+    ]);
+
+    $comment = Comment::create([
+        'review_id' => $review->review_id,
+        'user_id'   => $owner->user_id,
+        'content'   => 'Bình luận của người khác',
+    ]);
+
+    $response = $this->actingAs($otherUser)->deleteJson("/api/v1/comments/{$comment->comment_id}");
+
+    $response->assertStatus(403)
+        ->assertJson([
+            'status'  => 'error',
+            'message' => 'Bạn không có quyền xóa bình luận này.',
+        ]);
+
+    $this->assertDatabaseHas('comments', [
+        'comment_id' => $comment->comment_id,
+    ]);
+});

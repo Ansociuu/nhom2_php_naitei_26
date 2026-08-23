@@ -4,10 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
+    protected CloudinaryService $cloudinaryService;
+
+    public function __construct(CloudinaryService $cloudinaryService)
+    {
+        $this->cloudinaryService = $cloudinaryService;
+    }
+
     public function index(Request $request)
     {
         $query = Review::with(['user', 'tour', 'images'])
@@ -71,6 +79,14 @@ class ReviewController extends Controller
 
     public function destroy(Review $review)
     {
+        $review->loadMissing('images');
+
+        foreach ($review->images as $image) {
+            if (! empty($image->cloudinary_public_id)) {
+                $this->cloudinaryService->delete($image->cloudinary_public_id);
+            }
+        }
+
         $review->delete();
 
         return back()->with('success', 'Đã xóa đánh giá thành công.');
