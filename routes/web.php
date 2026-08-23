@@ -1,5 +1,13 @@
 <?php
 
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\RevenueController;
+use App\Http\Controllers\Admin\TourController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Admin\TourImageController;
@@ -70,13 +78,33 @@ Route::get('/payments/{txn}/status', [PaymentController::class, 'status'])->name
 Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Categories & Tours
     Route::resource('categories', CategoryController::class);
     Route::resource('tours', AdminTourController::class);
 
-     // Tour Images
+    // Tour Images
     Route::post('tours/{tour}/images', [TourImageController::class, 'store'])->name('tours.images.store');
     Route::patch('tours/{tour}/images/{image}/cover', [TourImageController::class, 'setCover'])->name('tours.images.cover');
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
+
+    // Users
+    Route::resource('users', UserController::class)->only(['index', 'edit', 'update', 'destroy']);
+
+    // Bookings (Admin)
+    Route::resource('bookings', AdminBookingController::class)->only(['index', 'show', 'edit', 'update']);
+    Route::post('bookings/{booking}/refund', [AdminBookingController::class, 'refund'])->name('bookings.refund');
+    Route::post('bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete');
+    Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');
+
+    // Reviews
+    Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
+    Route::post('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
+    Route::post('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
+    Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // Revenue
+    Route::get('revenue', [RevenueController::class, 'index'])->name('revenue.index');
 
     // Tour Itineraries
     Route::post('tours/{tour}/itineraries', [TourItineraryController::class, 'store'])->name('tours.itineraries.store');
