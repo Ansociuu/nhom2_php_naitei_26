@@ -1,7 +1,35 @@
 <x-site-layout>
-    <section class="aspect-[16/9] sm:aspect-[2/1] overflow-hidden">
+    <section class="relative aspect-[16/9] sm:aspect-[2/1] overflow-hidden">
         <img src="{{ asset('images/marketing/hero-bus.png') }}" alt="Your Weekend Adventure - Sun* Booking Tour"
              class="w-full h-full object-cover">
+    </section>
+
+    {{-- Thanh tìm kiếm tour --}}
+    <section class="relative z-10 -mt-10 sm:-mt-14">
+        <div class="container-page">
+            <form method="GET" action="{{ route('tours.index') }}"
+                  class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border p-4 sm:p-5">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                             class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2">
+                            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/>
+                        </svg>
+                        <input type="search" name="q" value="{{ request('q') }}"
+                               placeholder="Bạn muốn đi đâu cuối tuần này?"
+                               class="form-control pl-12 py-3.5 text-base">
+                    </div>
+
+                    <select name="region" class="form-control sm:w-auto sm:min-w-[180px] py-3.5">
+                        <option value="">Mọi khu vực</option>
+                        <option value="mien_nam" @selected(request('region') === 'mien_nam')>Miền Nam</option>
+                        <option value="mien_bac" @selected(request('region') === 'mien_bac')>Miền Bắc</option>
+                    </select>
+
+                    <button type="submit" class="btn-accent sm:px-8 shrink-0">Tìm tour</button>
+                </div>
+            </form>
+        </div>
     </section>
 
     <section class="min-h-[calc(100vh-100px)] max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

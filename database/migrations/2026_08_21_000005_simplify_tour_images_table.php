@@ -5,35 +5,43 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Admin nhập ảnh tour bằng URL trực tiếp, không upload qua Cloudinary,
- * nên bỏ các cột metadata Cloudinary và thay bằng một cột URL duy nhất.
+ * Ảnh tour có thể nhập bằng URL trực tiếp (không qua Cloudinary), nên thêm cột
+ * `image_url`.
+ *
+ * Lưu ý: các cột metadata Cloudinary được GIỮ NGUYÊN vì CloudinaryService và
+ * Admin\TourImageController vẫn ghi vào chúng — chỉ nới lỏng thành nullable để
+ * hai cách thêm ảnh cùng dùng được một bảng.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('tour_images', function (Blueprint $table) {
-            $table->string('image_url')->after('tour_id');
-        });
+        if (! Schema::hasColumn('tour_images', 'image_url')) {
+            Schema::table('tour_images', function (Blueprint $table) {
+                $table->string('image_url')->nullable()->after('tour_id');
+            });
+        }
 
-        Schema::table('tour_images', function (Blueprint $table) {
-            $table->dropColumn(['cloudinary_public_id', 'secure_url', 'format', 'width', 'height', 'bytes']);
-        });
+        foreach (['cloudinary_public_id', 'secure_url', 'format', 'width', 'height', 'bytes'] as $column) {
+            if (! Schema::hasColumn('tour_images', $column)) {
+                continue;
+            }
+
+            Schema::table('tour_images', function (Blueprint $table) use ($column) {
+                match ($column) {
+                    'width', 'height', 'bytes' => $table->integer($column)->nullable()->change(),
+                    default => $table->string($column)->nullable()->change(),
+                };
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('tour_images', function (Blueprint $table) {
-            $table->string('cloudinary_public_id')->nullable();
-            $table->string('secure_url')->nullable();
-            $table->string('format')->nullable();
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
-            $table->integer('bytes')->nullable();
-        });
-
-        Schema::table('tour_images', function (Blueprint $table) {
-            $table->dropColumn('image_url');
-        });
+        if (Schema::hasColumn('tour_images', 'image_url')) {
+            Schema::table('tour_images', function (Blueprint $table) {
+                $table->dropColumn('image_url');
+            });
+        }
     }
 };
