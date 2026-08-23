@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\TourController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +36,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/tours/featured', [TourController::class, 'featured']);
     Route::get('/tours/locations', [TourController::class, 'locations']);
     Route::get('/tours/{tour}', [TourController::class, 'show']);
+    Route::get('/tours/{tour}/reviews', [ReviewController::class, 'tourReviews']);
 
     // Public Payment Status Polling API
     Route::get('/payments/{txn}/status', [PaymentController::class, 'status']);
@@ -48,5 +51,11 @@ Route::prefix('v1')->group(function () {
 
         // Payment Checkout API
         Route::get('/bookings/{booking}/pay', [PaymentController::class, 'checkout']);
+
+        // Review & Interactivity API
+        Route::get('/reviews/my-reviews', [ReviewController::class, 'myReviews']);
+        Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
+        Route::post('/reviews/{review}/comments', [CommentController::class, 'store']);
+        Route::post('/reviews/{review}/like', [ReviewController::class, 'toggleLike']);
     });
 });

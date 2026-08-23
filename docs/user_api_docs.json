@@ -344,6 +344,100 @@
           "200": { "description": "Cập nhật tài khoản ngân hàng thành công" }
         }
       }
+    },
+    "/tours/{tour_id}/reviews": {
+      "get": {
+        "summary": "Danh sách các bài đánh giá công khai (status: approved) của một tour",
+        "parameters": [
+          { "name": "tour_id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thành công, trả về các bài đánh giá, điểm sao, hình ảnh đính kèm và bình luận" }
+        }
+      }
+    },
+    "/reviews/my-reviews": {
+      "get": {
+        "summary": "Lấy danh sách các chuyến đi đã hoàn thành và đánh giá của tôi",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Danh sách chuyến đi chờ đánh giá và các bài đánh giá đã gửi" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/review": {
+      "post": {
+        "summary": "Gửi bài đánh giá kèm hình ảnh cho chuyến đi đã hoàn thành",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["score", "content"],
+                "properties": {
+                  "score": { "type": "integer", "enum": [1, 2, 3, 4, 5], "example": 5 },
+                  "content": { "type": "string", "example": "Chuyến đi tuyệt vời, hướng dẫn viên nhiệt tình!" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Gửi đánh giá thành công, chờ Admin duyệt" },
+          "403": { "description": "Không có quyền hoặc chuyến đi chưa kết thúc" }
+        }
+      }
+    },
+    "/reviews/{review_id}/comments": {
+      "post": {
+        "summary": "Bình luận hoặc trả lời bình luận (reply) vào một bài đánh giá",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string", "example": "Bài review rất chi tiết!" },
+                  "parent_comment_id": { "type": "integer", "example": 1, "description": "ID bình luận cha (tùy chọn khi trả lời bình luận)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Thêm bình luận thành công" },
+          "403": { "description": "Bài đánh giá chưa được duyệt" }
+        }
+      }
+    },
+    "/reviews/{review_id}/like": {
+      "post": {
+        "summary": "Thích hoặc bỏ thích (toggle like) bài đánh giá",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Toggle thích/bỏ thích thành công, trả về trạng thái is_liked và tổng lượt thích" },
+          "403": { "description": "Bài đánh giá chưa được duyệt" }
+        }
+      }
     }
   },
   "components": {
