@@ -1,216 +1,155 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Chi tiết đặt tour') }} #BK-{{ $booking->booking_id }}
-        </h2>
-    </x-slot>
+<x-site-layout title="Chi tiết đặt chỗ">
+    <div class="container-narrow max-w-[1100px] py-8">
+        <a href="{{ route('bookings.index') }}" class="text-base text-gray-500 hover:text-[#2D5A3D]">← Lịch sử đặt tour</a>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            {{-- Flash Messages --}}
-            @if (session('status') === 'booking-created')
-                <div class="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg text-sm text-green-800 dark:text-green-200">
-                    ✅ {{ __('Đặt tour thành công! Vui lòng thanh toán để xác nhận.') }}
-                </div>
-            @elseif (session('status') === 'payment-success')
-                <div class="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg text-sm text-green-800 dark:text-green-200">
-                    ✅ {{ __('Thanh toán thành công! Đơn đặt tour đã được xác nhận.') }}
-                </div>
-            @elseif (session('status') === 'booking-cancelled')
-                <div class="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
-                    ⚠️ {{ __('Đơn đặt tour đã được hủy.') }}
-                </div>
-            @endif
-
-            {{-- Status Banner --}}
-            <div class="p-4 rounded-lg text-center
-                @switch($booking->status)
-                    @case('pending')    bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 @break
-                    @case('confirmed')  bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 @break
-                    @case('cancelled')  bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 @break
-                    @case('completed')  bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 @break
-                @endswitch">
-                <span class="text-lg font-semibold">
-                    @switch($booking->status)
-                        @case('pending')    🕒 {{ __('Chờ thanh toán') }} @break
-                        @case('confirmed')  ✅ {{ __('Đã xác nhận') }} @break
-                        @case('cancelled')  ❌ {{ __('Đã hủy') }} @break
-                        @case('completed')  🎉 {{ __('Hoàn thành') }} @break
-                    @endswitch
-                </span>
-            </div>
-
-            {{-- Booking Details --}}
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 sm:p-8">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{{ __('Thông tin đặt tour') }}</h3>
-
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+        <div class="mt-4 card-surface overflow-hidden">
+            <div class="bg-emerald-50 border-b px-7 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Mã đơn') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">#BK-{{ $booking->booking_id }}</dd>
+                        <h1 class="page-title text-[#2D5A3D]">Chi tiết đặt chỗ</h1>
+                        <p class="page-subtitle">Mã đặt chỗ #{{ $booking->booking_id }}</p>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Ngày đặt') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->booked_at->format('d/m/Y H:i') }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Tour') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->schedule->tour->title }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Ngày khởi hành') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->schedule->departure_date->format('d/m/Y') }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Nơi khởi hành') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->schedule->tour->departure_location ?? 'N/A' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Thời gian') }}</dt>
-                        <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->schedule->tour->duration_days }} {{ __('ngày') }}</dd>
-                    </div>
-                </dl>
-            </div>
-
-            {{-- Passenger Details (booking_details) --}}
-            @if ($booking->details->isNotEmpty())
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 sm:p-8">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                        {{ __('Danh sách hành khách') }} ({{ $booking->details->count() }})
-                    </h3>
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                            <thead class="bg-gray-50 dark:bg-gray-750">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">#</th>
-                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">{{ __('Họ và tên') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">{{ __('Tuổi') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">{{ __('Phân loại') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">{{ __('Giá vé') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                @foreach ($booking->details as $index => $detail)
-                                    <tr>
-                                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{{ $detail->name }}</td>
-                                        <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{{ $detail->age }}</td>
-                                        <td class="px-4 py-3 text-center">
-                                            @if ($detail->age >= 12)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                                                    {{ __('Người lớn') }}
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                                                    {{ __('Trẻ em') }}
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                                            {{ number_format($detail->price, 0, ',', '.') }} ₫
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            @endif
-
-            {{-- Price Breakdown --}}
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 sm:p-8">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{{ __('Chi tiết giá') }}</h3>
-
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between text-gray-700 dark:text-gray-300">
-                        <span>{{ __('Người lớn') }} ({{ $booking->num_adults }} × {{ number_format($booking->unit_price, 0, ',', '.') }} ₫)</span>
-                        <span>{{ number_format($booking->num_adults * $booking->unit_price, 0, ',', '.') }} ₫</span>
-                    </div>
-                    <div class="flex justify-between text-gray-700 dark:text-gray-300">
-                        <span>{{ __('Trẻ em') }} ({{ $booking->num_children }} × {{ number_format($booking->unit_price * 0.5, 0, ',', '.') }} ₫)</span>
-                        <span>{{ number_format($booking->num_children * $booking->unit_price * 0.5, 0, ',', '.') }} ₫</span>
-                    </div>
-                    <div class="flex justify-between font-semibold text-lg text-gray-900 dark:text-gray-100 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <span>{{ __('Tổng cộng') }}</span>
-                        <span class="text-indigo-600 dark:text-indigo-400">{{ number_format($booking->total_amount, 0, ',', '.') }} ₫</span>
-                    </div>
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-white
+                        {{ match ($booking->status) {
+                            'confirmed' => 'text-[#2D5A3D]',
+                            'completed' => 'text-blue-700',
+                            'cancelled' => 'text-red-600',
+                            default => 'text-amber-700',
+                        } }}">
+                        @switch($booking->status)
+                            @case('pending') Chờ thanh toán @break
+                            @case('confirmed') Đã xác nhận @break
+                            @case('cancelled') Đã hủy @break
+                            @case('completed') Hoàn tất @break
+                        @endswitch
+                    </span>
                 </div>
             </div>
 
-            {{-- Payment Info --}}
-            @if ($booking->payment)
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 sm:p-8">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{{ __('Thanh toán') }}</h3>
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                        <div>
-                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Phương thức') }}</dt>
-                            <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ ucfirst($booking->payment->gateway) }}</dd>
+            <div class="p-7">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 text-base">
+                    <div>
+                        <div class="text-gray-400">Tour</div>
+                        <div class="font-semibold">{{ $booking->schedule->tour->title }}</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">Ngày khởi hành</div>
+                        <div class="font-semibold">{{ $booking->schedule->departure_date->format('d/m/Y') }}</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">Loại vé</div>
+                        <div class="font-semibold">
+                            {{ $booking->ticketType ? 'Vé "'.$booking->ticketType->name.'"' : '—' }}
                         </div>
-                        <div>
-                            <dt class="text-gray-500 dark:text-gray-400">{{ __('Trạng thái') }}</dt>
-                            <dd class="mt-1">
-                                @if ($booking->payment->status === 'success')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">✓ {{ __('Thành công') }}</span>
-                                @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">{{ ucfirst($booking->payment->status) }}</span>
-                                @endif
-                            </dd>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">Số vé</div>
+                        @php
+                            $breakdown = $booking->num_adults.' người lớn';
+                            if ($booking->num_children) {
+                                $breakdown .= ', '.$booking->num_children.' trẻ em';
+                            }
+                        @endphp
+                        <div class="font-semibold">{{ $booking->num_adults + $booking->num_children }} vé
+                            <span class="text-gray-400 font-normal">({{ $breakdown }})</span>
                         </div>
-                        @if ($booking->payment->paid_at)
-                            <div>
-                                <dt class="text-gray-500 dark:text-gray-400">{{ __('Thời gian thanh toán') }}</dt>
-                                <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->payment->paid_at->format('d/m/Y H:i') }}</dd>
-                            </div>
-                        @endif
-                        @if ($booking->payment->expire_at)
-                            <div>
-                                <dt class="text-gray-500 dark:text-gray-400">{{ __('Hạn thanh toán') }}</dt>
-                                <dd class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ $booking->payment->expire_at->format('d/m/Y H:i') }}</dd>
-                            </div>
-                        @endif
-                    </dl>
+                    </div>
+                    <div class="sm:col-span-2 pt-4 border-t flex items-baseline justify-between">
+                        <span class="text-gray-400">Tổng tiền</span>
+                        <span class="text-2xl font-bold text-[#2D5A3D]">{{ number_format((float) $booking->total_amount) }} VND</span>
+                    </div>
+                    @if ($booking->note)
+                        <div class="sm:col-span-2">
+                            <div class="text-gray-400">Ghi chú</div>
+                            <div>{{ $booking->note }}</div>
+                        </div>
+                    @endif
                 </div>
-            @endif
 
-            {{-- Action Buttons --}}
-            <div class="flex flex-col sm:flex-row gap-4">
-                {{-- QR Pay Button --}}
-                @if ($booking->status === 'pending')
-                    <a href="{{ route('bookings.pay', $booking) }}"
-                       class="flex-1 inline-flex justify-center items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition text-sm">
-                        💳 {{ __('Thanh toán ngay (Quét mã QR)') }}
-                    </a>
+                {{-- Hành khách --}}
+                @if ($booking->details->isNotEmpty())
+                    <div class="mt-8">
+                        <h2 class="card-title">Thông tin người đi ({{ $booking->details->count() }})</h2>
+                        <div class="mt-3 divide-y border rounded-xl overflow-hidden">
+                            @foreach ($booking->details as $detail)
+                                <div class="p-4 flex flex-wrap items-center gap-4 text-base">
+                                    <span class="w-7 h-7 rounded-full bg-[#2D5A3D] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                                        {{ $loop->iteration }}
+                                    </span>
+                                    <span class="font-semibold">{{ $detail->name }}</span>
+                                    @if ($detail->is_booker)
+                                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#2D5A3D] text-xs font-semibold">Người đặt</span>
+                                    @endif
+                                    @if ($detail->age)
+                                        <span class="text-gray-500">{{ $detail->age }} tuổi</span>
+                                    @endif
+                                    @if ($detail->phone)
+                                        <span class="text-gray-500">{{ $detail->phone }}</span>
+                                    @endif
+                                    @if ($detail->seat_no)
+                                        <span class="text-gray-500">Ghế {{ $detail->seat_no }}</span>
+                                    @endif
+                                    <span class="ml-auto font-semibold">{{ number_format((float) $detail->price) }}₫</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
 
-                {{-- Cancel Button --}}
-                @if (in_array($booking->status, ['pending', 'confirmed']))
-                    <form method="POST" action="{{ route('bookings.cancel', $booking) }}" class="flex-1"
-                          x-data
-                          @submit.prevent="if (confirm('{{ __('Bạn có chắc muốn hủy đơn đặt tour này?') }}')) $el.submit()">
-                        @csrf
-                        <button type="submit"
-                                class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm transition text-sm">
-                            ✕ {{ __('Hủy đặt tour') }}
-                        </button>
-                    </form>
+                {{-- Thanh toán --}}
+                @if ($booking->payment)
+                    <div class="mt-8">
+                        <h2 class="card-title">Thanh toán</h2>
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-5 text-base border rounded-xl p-5">
+                            <div>
+                                <div class="text-gray-400">Cổng thanh toán</div>
+                                <div class="font-semibold">{{ ucfirst($booking->payment->gateway) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-400">Trạng thái</div>
+                                <div class="font-semibold {{ $booking->payment->status === 'success' ? 'text-[#2D5A3D]' : 'text-amber-700' }}">
+                                    {{ match ($booking->payment->status) {
+                                        'success' => 'Thành công',
+                                        'failed' => 'Thất bại',
+                                        'refunded' => 'Đã hoàn tiền',
+                                        default => 'Chờ thanh toán',
+                                    } }}
+                                </div>
+                            </div>
+                            @if ($booking->payment->paid_at)
+                                <div>
+                                    <div class="text-gray-400">Thanh toán lúc</div>
+                                    <div class="font-semibold">{{ $booking->payment->paid_at->format('d/m/Y H:i') }}</div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 @endif
 
-                {{-- Back to list --}}
-                <a href="{{ route('bookings.index') }}"
-                   class="flex-1 inline-flex justify-center items-center px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm">
-                    ← {{ __('Danh sách đặt tour') }}
-                </a>
-            </div>
+                @if ($booking->status === 'cancelled' && $booking->cancelled_at)
+                    <p class="mt-6 text-sm text-gray-500">Đã hủy lúc {{ $booking->cancelled_at->format('d/m/Y H:i') }}</p>
+                @endif
 
-            {{-- Cancellation Info --}}
-            @if ($booking->status === 'cancelled' && $booking->cancelled_at)
-                <div class="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    {{ __('Đã hủy lúc') }}: {{ $booking->cancelled_at->format('d/m/Y H:i') }}
+                <div class="mt-8 flex flex-wrap gap-3">
+                    @if ($booking->status === 'pending')
+                        <a href="{{ route('bookings.pay', $booking) }}" class="btn-accent">
+                            Thanh toán ngay (Quét mã QR)
+                        </a>
+                    @endif
+
+                    @if (in_array($booking->status, ['pending', 'confirmed'], true))
+                        <form method="POST" action="{{ route('bookings.cancel', $booking) }}"
+                              onsubmit="return confirm('Bạn có chắc muốn hủy đơn đặt tour này?');">
+                            @csrf
+                            <button type="submit" class="btn px-6 py-3 border border-red-300 text-red-600 hover:bg-red-50">
+                                Hủy đặt tour
+                            </button>
+                        </form>
+                    @endif
+
+                    <a href="{{ route('bookings.index') }}" class="btn-ghost">Danh sách đặt tour</a>
                 </div>
-            @endif
-
+            </div>
         </div>
     </div>
-</x-app-layout>
+</x-site-layout>

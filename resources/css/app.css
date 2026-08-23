@@ -1,3 +1,92 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+/**
+ * Bộ class dùng chung cho giao diện khách hàng, giữ typography/khoảng cách
+ * nhất quán giữa các trang thay vì lặp lại utility rời rạc.
+ */
+@layer components {
+    /* Bố cục */
+    .container-page {
+        @apply max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12;
+    }
+
+    .container-narrow {
+        @apply max-w-5xl mx-auto px-6 sm:px-8 lg:px-12;
+    }
+
+    /* Chữ — tiêu đề mục marketing 35px/700; tiêu đề trang quản lý gọn hơn */
+    .page-title {
+        @apply text-2xl leading-tight font-bold text-gray-900;
+    }
+
+    .page-subtitle {
+        @apply mt-1 text-sm text-gray-500;
+    }
+
+    .section-title {
+        @apply text-[35px] leading-tight font-bold uppercase text-black;
+    }
+
+    .card-title {
+        @apply text-lg font-extrabold text-gray-900;
+    }
+
+    .muted-text {
+        @apply text-base text-gray-500;
+    }
+
+    /* Khối */
+    .card-surface {
+        @apply bg-white border rounded-2xl;
+    }
+
+    /* Form */
+    .form-label {
+        @apply block text-sm font-semibold text-gray-700;
+    }
+
+    .form-control {
+        @apply w-full rounded-xl border-gray-300 text-base shadow-sm
+               focus:border-[#2D5A3D] focus:ring-[#2D5A3D];
+    }
+
+    .form-hint {
+        @apply mt-1 text-xs text-gray-400;
+    }
+
+    /* Nút */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 font-semibold rounded-full
+               transition disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .btn-primary {
+        @apply btn px-6 py-3 bg-[#2D6A2D] text-white hover:bg-[#245524];
+    }
+
+    /* Nút vàng theo đúng gotrail: #FAE12C, bo 5px, chữ 20px/700 */
+    .btn-accent {
+        @apply btn px-5 py-2.5 rounded-[5px] bg-[#FAE12C] text-black text-xl font-bold hover:bg-[#efd41d];
+    }
+
+    /* Nền hoạ tiết topo (gradient xám rất nhạt, giống gotrail) */
+    .bg-topo-gray {
+        background-image: url('/images/marketing/topo-gray.svg');
+        background-repeat: repeat;
+        background-position: center top;
+    }
+
+    .btn-ghost {
+        @apply btn px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50;
+    }
+
+    .btn-sm {
+        @apply px-5 py-2.5 text-sm;
+    }
+}

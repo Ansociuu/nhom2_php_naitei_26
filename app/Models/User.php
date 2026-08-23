@@ -21,7 +21,18 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $table = 'users';
 
     protected $primaryKey = 'user_id';
-
+    protected $fillable = [
+        'username',
+        'email',
+        'email_verified_at',
+        'password_hash',
+        'role',
+        'status',
+        'last_login_at',
+    ];
+    protected $hidden = [
+        'password_hash',
+    ];
     /**
      * Bảng users không có cột remember_token nên tắt tính năng "remember me".
      */
@@ -32,31 +43,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return UserFactory::new();
     }
 
-    protected $fillable = [
-        'username',
-        'email',
-        'email_verified_at',
-        'password_hash',
-        'role',
-        'status',
-        'last_login_at',
-    ];
-
-    protected $hidden = [
-        'password_hash',
-    ];
-    
     protected function casts(): array
     {
         return [
             'password_hash' => 'hashed',
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
-            'last_login_at' => 'datetime',
         ];
     }
-    
+
     //Tên cột password dùng cho Laravel Authentication vì Laravel nhận diện password không phải password_hash
     public function getAuthPasswordName(): string
     {

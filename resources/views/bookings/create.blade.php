@@ -1,215 +1,301 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Đặt tour') }} — {{ $tour->title }}
-        </h2>
-    </x-slot>
+@php
+    $defaultTicketId = (string) request('ticket_type_id') !== ''
+        ? (int) request('ticket_type_id')
+        : ($tour->ticketTypes->firstWhere('is_recommended', true)?->ticket_type_id ?? $tour->ticketTypes->first()?->ticket_type_id);
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 sm:p-8">
+    $defaultScheduleId = (string) request('schedule_id') !== ''
+        ? (int) request('schedule_id')
+        : $tour->schedules->firstWhere(fn ($s) => $s->available_slots > 0)?->schedule_id;
 
-                {{-- Tour Overview --}}
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $tour->title }}</h3>
-                    <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div>📍 {{ __('Khởi hành') }}: {{ $tour->departure_location ?? 'N/A' }}</div>
-                        <div>📅 {{ __('Thời gian') }}: {{ $tour->duration_days }} {{ __('ngày') }}</div>
-                        <div>💰 {{ __('Giá gốc') }}: {{ number_format($tour->price, 0, ',', '.') }} ₫ / {{ __('người lớn') }}</div>
-                    </div>
-                </div>
+    $ticketPrices = $tour->ticketTypes->mapWithKeys(fn ($t) => [$t->ticket_type_id => (float) $t->price]);
+    $scheduleSlots = $tour->schedules->mapWithKeys(fn ($s) => [$s->schedule_id => (int) $s->available_slots]);
+@endphp
 
-                @if ($schedules->isEmpty())
-                    <div class="p-6 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        {{ __('Hiện tại chưa có lịch khởi hành nào khả dụng cho tour này.') }}
-                    </div>
-                @else
-                    @php
-                        $oldPassengers = old('passengers', [
-                            ['name' => Auth::user()->username ?? '', 'age' => 25]
-                        ]);
-                    @endphp
+<x-site-layout title="Đặt chỗ">
+    <div class="container-narrow max-w-6xl py-12">
+        <a href="{{ route('tours.show', $tour) }}" class="text-base text-gray-500 hover:text-[#2D5A3D]">← Quay lại tour</a>
+        <h1 class="mt-3 page-title uppercase">Đặt chỗ – Trail Bus {{ $tour->title }}</h1>
 
-                    <form method="POST" action="{{ route('bookings.store') }}"
-                          x-data="{
-                              scheduleId: '{{ old('schedule_id', $schedules->first()->schedule_id) }}',
-                              passengers: {{ Js::from($oldPassengers) }},
-                              schedules: {{ Js::from($schedules->map(fn ($s) => [
-                                  'id'    => $s->schedule_id,
-                                  'price' => floatval($s->price_override ?? $tour->price),
-                                  'slots' => $s->available_slots,
-                                  'date'  => $s->departure_date->format('d/m/Y'),
-                              ])) }},
-                              get selectedSchedule() {
-                                  return this.schedules.find(s => s.id == this.scheduleId) || this.schedules[0];
-                              },
-                              get unitPrice() { return this.selectedSchedule?.price || 0; },
-                              addPassenger() {
-                                  if (this.passengers.length < (this.selectedSchedule?.slots || 99)) {
-                                      this.passengers.push({ name: '', age: 20 });
-                                  }
-                              },
-                              removePassenger(index) {
-                                  if (this.passengers.length > 1) {
-                                      this.passengers.splice(index, 1);
-                                  }
-                              },
-                              getPassengerPrice(age) {
-                                  const a = parseInt(age);
-                                  if (isNaN(a) || a >= 12) {
-                                      return this.unitPrice;
-                                  }
-                                  return this.unitPrice * 0.5;
-                              },
-                              get numAdults() {
-                                  return this.passengers.filter(p => isNaN(parseInt(p.age)) || parseInt(p.age) >= 12).length;
-                              },
-                              get numChildren() {
-                                  return this.passengers.filter(p => !isNaN(parseInt(p.age)) && parseInt(p.age) < 12).length;
-                              },
-                              get totalAmount() {
-                                  return this.passengers.reduce((sum, p) => sum + this.getPassengerPrice(p.age), 0);
-                              },
-                              formatVND(n) { return new Intl.NumberFormat('vi-VN').format(n) + ' ₫'; }
-                          }">
-                        @csrf
+        @if ($errors->any())
+            <div class="mt-5 rounded-xl bg-red-50 border border-red-200 text-red-700 px-5 py-4">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-                        {{-- General Errors for passengers array --}}
-                        @error('passengers')
-                            <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-sm text-red-700 dark:text-red-300">
-                                {{ $message }}
-                            </div>
-                        @enderror
+        @if ($tour->schedules->isEmpty() || $tour->ticketTypes->isEmpty())
+            <p class="mt-6 text-lg text-gray-500">Tour này hiện chưa có lịch khởi hành hoặc loại vé để đặt chỗ.</p>
+        @else
+            <form method="POST" action="{{ route('bookings.store', $tour) }}"
+                  x-data="bookingForm({
+                      ticketId: {{ $defaultTicketId ?? 'null' }},
+                      scheduleId: {{ $defaultScheduleId ?? 'null' }},
+                      prices: {{ $ticketPrices->toJson() }},
+                      slots: {{ $scheduleSlots->toJson() }}
+                  })"
+                  class="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+                @csrf
 
-                        {{-- Schedule Selector --}}
-                        <div class="mb-8">
-                            <x-input-label for="schedule_id" :value="__('Lịch khởi hành')" />
-                            <select id="schedule_id" name="schedule_id" x-model="scheduleId"
-                                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
-                                    required>
-                                @foreach ($schedules as $schedule)
-                                    <option value="{{ $schedule->schedule_id }}" @selected(old('schedule_id') == $schedule->schedule_id)>
-                                        {{ $schedule->departure_date->format('d/m/Y') }}
-                                        — {{ number_format($schedule->price_override ?? $tour->price, 0, ',', '.') }} ₫
-                                        — {{ __('Còn') }} {{ $schedule->available_slots }} {{ __('chỗ') }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <x-input-error class="mt-2" :messages="$errors->get('schedule_id')" />
+                <div class="space-y-6">
+                    {{-- Bước 1: ngày khởi hành --}}
+                    <section class="card-surface p-6">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-[#F4D03F] text-gray-900 font-bold flex items-center justify-center shrink-0">1</span>
+                            <h2 class="text-xl font-extrabold uppercase">Ngày khởi hành</h2>
                         </div>
 
-                        {{-- Passenger Information Section --}}
-                        <div class="mb-8">
-                            <div class="flex justify-between items-center mb-4">
-                                <div>
-                                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                        {{ __('Thông tin hành khách') }} (<span x-text="passengers.length"></span>)
-                                    </h3>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ __('Từ 12 tuổi trở lên tính giá Người lớn (100%), dưới 12 tuổi tính Trẻ em (50%).') }}
-                                    </p>
-                                </div>
-                                <button type="button" @click="addPassenger()"
-                                        class="inline-flex items-center px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-md text-xs font-semibold transition">
-                                    + {{ __('Thêm người đi cùng') }}
-                                </button>
-                            </div>
-
-                            <div class="space-y-4">
-                                <template x-for="(passenger, index) in passengers" :key="index">
-                                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-750 relative">
-                                        <div class="flex justify-between items-center mb-3">
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200"
-                                                      x-text="index === 0 ? '{{ __('Hành khách 1 (Người đặt tour)') }}' : '{{ __('Hành khách ') }}' + (index + 1)"></span>
-
-                                                {{-- Adult / Child classification badge --}}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                                      :class="parseInt(passenger.age) >= 12 || isNaN(parseInt(passenger.age))
-                                                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
-                                                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'"
-                                                      x-text="parseInt(passenger.age) >= 12 || isNaN(parseInt(passenger.age)) ? 'Người lớn (100%)' : 'Trẻ em (50%)'">
-                                                </span>
-                                            </div>
-
-                                            <button type="button" x-show="index > 0" @click="removePassenger(index)"
-                                                    class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium">
-                                                ✕ {{ __('Xóa') }}
-                                            </button>
+                        <div class="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            @foreach ($tour->schedules as $schedule)
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="schedule_id" value="{{ $schedule->schedule_id }}"
+                                           class="peer sr-only" required
+                                           @disabled($schedule->available_slots < 1)
+                                           x-model.number="scheduleId">
+                                    <div class="rounded-xl border-2 p-4 text-center transition
+                                                peer-checked:border-[#2D5A3D] peer-checked:bg-emerald-50
+                                                peer-disabled:opacity-40 peer-disabled:cursor-not-allowed
+                                                border-gray-200 hover:border-gray-300">
+                                        <div class="text-lg font-bold text-gray-900">
+                                            {{ $schedule->departure_date->format('d/m') }}
                                         </div>
-
-                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            {{-- Name input --}}
-                                            <div class="sm:col-span-2">
-                                                <label :for="'passenger_name_' + index" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                    {{ __('Họ và tên') }} <span class="text-red-500">*</span>
-                                                </label>
-                                                <input type="text"
-                                                       :id="'passenger_name_' + index"
-                                                       :name="'passengers[' + index + '][name]'"
-                                                       x-model="passenger.name"
-                                                       required
-                                                       placeholder="{{ __('Ví dụ: Nguyễn Văn A') }}"
-                                                       class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm" />
-                                            </div>
-
-                                            {{-- Age input --}}
-                                            <div>
-                                                <label :for="'passenger_age_' + index" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                    {{ __('Tuổi') }} <span class="text-red-500">*</span>
-                                                </label>
-                                                <input type="number"
-                                                       :id="'passenger_age_' + index"
-                                                       :name="'passengers[' + index + '][age]'"
-                                                       x-model.number="passenger.age"
-                                                       min="0" max="120" required
-                                                       class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm" />
-                                            </div>
-                                        </div>
-
-                                        {{-- Individual calculated ticket price --}}
-                                        <div class="mt-2 text-right text-xs text-gray-500 dark:text-gray-400">
-                                            {{ __('Giá vé') }}: <span class="font-semibold text-gray-800 dark:text-gray-200" x-text="formatVND(getPassengerPrice(passenger.age))"></span>
+                                        <div class="text-xs text-gray-500">{{ $schedule->departure_date->format('Y') }}</div>
+                                        <div class="mt-2 text-xs {{ $schedule->available_slots > 0 ? 'text-[#2D5A3D]' : 'text-red-500' }}">
+                                            {{ $schedule->available_slots > 0 ? $schedule->available_slots.' chỗ trống' : 'Hết chỗ' }}
                                         </div>
                                     </div>
-                                </template>
+                                </label>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    {{-- Bước 2: loại vé --}}
+                    <section class="card-surface p-6">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-[#F4D03F] text-gray-900 font-bold flex items-center justify-center shrink-0">2</span>
+                            <h2 class="text-xl font-extrabold uppercase">Chọn loại vé</h2>
+                        </div>
+
+                        <div class="mt-5 space-y-3">
+                            @foreach ($tour->ticketTypes as $ticketType)
+                                <label class="relative block cursor-pointer">
+                                    <input type="radio" name="ticket_type_id" value="{{ $ticketType->ticket_type_id }}"
+                                           class="peer sr-only" required x-model.number="ticketId">
+                                    <div class="rounded-xl border-2 p-5 transition border-gray-200 hover:border-gray-300
+                                                peer-checked:border-[#2D5A3D] peer-checked:bg-emerald-50">
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div class="min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="text-lg font-extrabold uppercase">Vé "{{ $ticketType->name }}"</span>
+                                                    @if ($ticketType->is_recommended)
+                                                        <span class="px-2.5 py-0.5 rounded-full bg-gray-900 text-white text-xs font-semibold">★ Phổ biến</span>
+                                                    @endif
+                                                </div>
+
+                                                @if (!empty($ticketType->features))
+                                                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-base text-gray-700">
+                                                        @foreach ($ticketType->features as $feature)
+                                                            <span>• {{ $feature }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+
+                                                @if ($ticketType->target_audience)
+                                                    <p class="mt-2 text-base text-gray-600">
+                                                        <span class="font-semibold">Dành cho:</span> {{ $ticketType->target_audience }}
+                                                    </p>
+                                                @endif
+                                            </div>
+
+                                            <div class="text-right shrink-0">
+                                                @if ($ticketType->original_price && $ticketType->original_price > $ticketType->price)
+                                                    <div class="text-sm text-gray-400 line-through">{{ number_format((float) $ticketType->original_price) }}</div>
+                                                @endif
+                                                <div class="text-xl font-extrabold text-gray-900">{{ number_format((float) $ticketType->price) }}</div>
+                                                <div class="text-xs text-gray-500">VND / vé</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    {{-- Bước 3: số vé + thông tin người đi --}}
+                    <section class="card-surface p-6">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-[#F4D03F] text-gray-900 font-bold flex items-center justify-center shrink-0">3</span>
+                            <h2 class="text-xl font-extrabold uppercase">Số vé &amp; người đi</h2>
+                        </div>
+
+                        <div class="mt-5 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border">
+                            <div>
+                                <div class="font-semibold text-gray-900">Số lượng vé</div>
+                                <div class="text-sm text-gray-500">Mỗi vé tương ứng một người đi</div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <button type="button" @click="setCount(passengers.length - 1)"
+                                        :disabled="passengers.length <= 1"
+                                        class="w-11 h-11 rounded-full border-2 border-gray-300 text-xl font-bold text-gray-700
+                                               hover:border-[#2D5A3D] hover:text-[#2D5A3D] disabled:opacity-40 disabled:cursor-not-allowed">−</button>
+                                <span class="w-10 text-center text-2xl font-extrabold" x-text="passengers.length"></span>
+                                <button type="button" @click="setCount(passengers.length + 1)"
+                                        :disabled="passengers.length >= maxSeats()"
+                                        class="w-11 h-11 rounded-full border-2 border-gray-300 text-xl font-bold text-gray-700
+                                               hover:border-[#2D5A3D] hover:text-[#2D5A3D] disabled:opacity-40 disabled:cursor-not-allowed">+</button>
                             </div>
                         </div>
 
-                        {{-- Dynamic Price Summary --}}
-                        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ __('Chi tiết giá & Chỗ trống') }}</h4>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between text-gray-700 dark:text-gray-300">
-                                    <span>{{ __('Người lớn (≥ 12 tuổi)') }}: <span x-text="numAdults"></span> × <span x-text="formatVND(unitPrice)"></span></span>
-                                    <span x-text="formatVND(numAdults * unitPrice)"></span>
+                        <p class="mt-2 text-sm text-gray-500" x-show="maxSeats() < 99" x-cloak>
+                            Chuyến này còn <span class="font-semibold" x-text="maxSeats()"></span> chỗ trống.
+                        </p>
+
+                        <div class="mt-5 space-y-4">
+                            <template x-for="(passenger, index) in passengers" :key="index">
+                                <div class="rounded-xl border p-5">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-7 h-7 rounded-full bg-[#2D5A3D] text-white text-sm font-bold flex items-center justify-center"
+                                                  x-text="index + 1"></span>
+                                            <span class="font-bold text-gray-900">
+                                                <span x-show="index === 0">Người đặt (đại diện)</span>
+                                                <span x-show="index > 0">Người đi thứ <span x-text="index + 1"></span></span>
+                                            </span>
+                                        </div>
+
+                                        <button type="button" x-show="passengers.length > 1" @click="removeAt(index)"
+                                                class="text-sm text-red-500 hover:text-red-700 hover:underline">Xoá</button>
+                                    </div>
+
+                                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="sm:col-span-2">
+                                            <label class="form-label">Họ và tên <span class="text-red-500">*</span></label>
+                                            <input type="text" :name="`passengers[${index}][full_name]`" x-model="passenger.full_name"
+                                                   placeholder="VD: Nguyễn Văn A" required
+                                                   class="mt-1.5 form-control">
+                                        </div>
+
+                                        <div>
+                                            <label class="form-label">Tuổi</label>
+                                            <input type="number" :name="`passengers[${index}][age]`" x-model="passenger.age"
+                                                   placeholder="VD: 25" min="0" max="120"
+                                                   class="mt-1.5 form-control">
+                                            <p class="form-hint">Dưới 12 tuổi được tính là trẻ em</p>
+                                        </div>
+
+                                        <div>
+                                            <label class="form-label">Số điện thoại</label>
+                                            <input type="tel" :name="`passengers[${index}][phone]`" x-model="passenger.phone"
+                                                   placeholder="VD: 0912 345 678"
+                                                   class="mt-1.5 form-control">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between text-gray-700 dark:text-gray-300">
-                                    <span>{{ __('Trẻ em (< 12 tuổi)') }}: <span x-text="numChildren"></span> × <span x-text="formatVND(unitPrice * 0.5)"></span></span>
-                                    <span x-text="formatVND(numChildren * unitPrice * 0.5)"></span>
-                                </div>
-                                <div class="flex justify-between font-semibold text-base text-gray-900 dark:text-gray-100 border-t border-gray-300 dark:border-gray-600 pt-2">
-                                    <span>{{ __('Tổng cộng') }} (<span x-text="passengers.length"></span> {{ __('khách') }})</span>
-                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold" x-text="formatVND(totalAmount)"></span>
-                                </div>
+                            </template>
+                        </div>
+
+                        <div class="mt-5">
+                            <label for="note" class="form-label">Ghi chú (tuỳ chọn)</label>
+                            <textarea id="note" name="note" rows="3" placeholder="Yêu cầu đặc biệt, dị ứng thực phẩm, ..."
+                                      class="mt-1.5 form-control">{{ old('note') }}</textarea>
+                        </div>
+                    </section>
+                </div>
+
+                {{-- Tóm tắt đơn --}}
+                <aside class="lg:sticky lg:top-[116px]">
+                    <div class="card-surface overflow-hidden">
+                        <div class="bg-gray-900 px-5 py-4">
+                            <h2 class="text-white font-extrabold uppercase text-center">Tóm tắt đơn</h2>
+                        </div>
+
+                        <div class="p-5 space-y-3 text-base">
+                            <div class="flex justify-between gap-3">
+                                <span class="text-gray-500">Tour</span>
+                                <span class="font-semibold text-right">{{ $tour->title }}</span>
                             </div>
-                            <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                                {{ __('Lịch này còn') }} <span class="font-medium text-gray-700 dark:text-gray-300" x-text="selectedSchedule?.slots"></span> {{ __('chỗ trống') }}.
-                            </p>
-                        </div>
+                            <div class="flex justify-between gap-3">
+                                <span class="text-gray-500">Ngày đi</span>
+                                <span class="font-semibold text-right" x-text="scheduleLabel()"></span>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <span class="text-gray-500">Loại vé</span>
+                                <span class="font-semibold text-right" x-text="ticketLabel()"></span>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <span class="text-gray-500">Số vé</span>
+                                <span class="font-semibold" x-text="passengers.length + ' vé'"></span>
+                            </div>
 
-                        <div class="flex items-center justify-end gap-4">
-                            <a href="{{ url()->previous() }}" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                                {{ __('← Quay lại') }}
-                            </a>
-                            <x-primary-button>
-                                {{ __('Xác nhận đặt tour') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                @endif
+                            <div class="pt-3 border-t flex justify-between items-baseline gap-3">
+                                <span class="font-bold">Tổng tiền</span>
+                                <span class="text-2xl font-extrabold text-[#2D5A3D]" x-text="formatPrice(total())"></span>
+                            </div>
 
-            </div>
-        </div>
+                            <button type="submit"
+                                    class="w-full mt-2 py-4 bg-[#F4D03F] text-gray-900 font-extrabold rounded-xl hover:bg-[#e8c530] transition">
+                                Xác Nhận Đặt Chỗ →
+                            </button>
+                            <p class="text-xs text-center text-gray-400">Bạn chưa bị trừ tiền ở bước này.</p>
+                        </div>
+                    </div>
+                </aside>
+            </form>
+
+            @php
+                $scheduleLabels = $tour->schedules->mapWithKeys(fn ($s) => [$s->schedule_id => $s->departure_date->format('d/m/Y')]);
+                $ticketLabels = $tour->ticketTypes->mapWithKeys(fn ($t) => [$t->ticket_type_id => $t->name]);
+            @endphp
+
+            <script>
+                function bookingForm({ ticketId, scheduleId, prices, slots }) {
+                    return {
+                        ticketId,
+                        scheduleId,
+                        prices,
+                        slots,
+                        scheduleLabels: @json($scheduleLabels),
+                        ticketLabels: @json($ticketLabels),
+                        passengers: [{ full_name: '', age: '', phone: '' }],
+
+                        init() {
+                            // Đổi ngày khởi hành có thể giảm số chỗ còn lại, cắt bớt cho khớp.
+                            this.$watch('scheduleId', () => this.setCount(this.passengers.length));
+                        },
+                        maxSeats() {
+                            return this.slots[this.scheduleId] ?? 99;
+                        },
+                        setCount(next) {
+                            const target = Math.max(1, Math.min(next, this.maxSeats()));
+                            while (this.passengers.length < target) {
+                                this.passengers.push({ full_name: '', age: '', phone: '' });
+                            }
+                            while (this.passengers.length > target) {
+                                this.passengers.pop();
+                            }
+                        },
+                        removeAt(index) {
+                            if (this.passengers.length > 1) this.passengers.splice(index, 1);
+                        },
+                        total() {
+                            return (this.prices[this.ticketId] ?? 0) * this.passengers.length;
+                        },
+                        formatPrice(value) {
+                            return new Intl.NumberFormat('vi-VN').format(value) + ' VND';
+                        },
+                        scheduleLabel() {
+                            return this.scheduleLabels[this.scheduleId] ?? 'Chưa chọn';
+                        },
+                        ticketLabel() {
+                            const name = this.ticketLabels[this.ticketId];
+                            return name ? `Vé "${name}"` : 'Chưa chọn';
+                        },
+                    };
+                }
+            </script>
+        @endif
     </div>
-</x-app-layout>
+</x-site-layout>
