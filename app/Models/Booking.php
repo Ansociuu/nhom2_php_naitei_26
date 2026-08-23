@@ -18,6 +18,11 @@ class Booking extends Model
 
     protected $primaryKey = 'booking_id';
 
+    public function getRouteKeyName(): string
+    {
+        return 'booking_id';
+    }
+
     protected $fillable = [
         'user_id',
         'schedule_id',
@@ -62,13 +67,13 @@ class Booking extends Model
         return $this->belongsTo(TicketType::class, 'ticket_type_id', 'ticket_type_id');
     }
 
-    public function passengers(): HasMany
-    {
-        return $this->hasMany(BookingPassenger::class, 'booking_id', 'booking_id');
-    }
-
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class, 'booking_id', 'booking_id');
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(BookingDetail::class, 'booking_id', 'booking_id');
     }
 }

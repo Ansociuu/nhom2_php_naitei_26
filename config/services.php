@@ -60,4 +60,17 @@ return [
         'redirect'      => env('GOOGLE_REDIRECT'),
     ],
 
+    'payment' => [
+        'scan_base_url' => env('PAYMENT_SCAN_BASE_URL', 'https://gating-satirical-refinery.ngrok-free.dev'),
+    ],
+
+    'cloudinary' => [
+        'cloud_name'    => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key'       => env('CLOUDINARY_API_KEY'),
+        'api_secret'    => env('CLOUDINARY_API_SECRET'),
+        'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET'),
+        'url'           => env('CLOUDINARY_URL'),
+    ],
+
+
 ];

@@ -199,6 +199,21 @@ Lịch trình chi tiết từng ngày của tour.
 
 ---
 
+### `booking_details`
+
+Thông tin chi tiết từng hành khách trong một đơn đặt tour.
+
+| Cột | Kiểu | Ràng buộc | Mô tả |
+|-----|------|-----------|-------|
+| `booking_detail_id` | `int` | PK, AUTO_INCREMENT | Khóa chính |
+| `booking_id` | `int` | FK → `bookings.booking_id` (CASCADE DELETE) | Đơn đặt tour tương ứng |
+| `name` | `varchar` | NOT NULL | Họ và tên hành khách |
+| `age` | `tinyint unsigned` | NOT NULL | Tuổi của hành khách (≥ 12: Người lớn, < 12: Trẻ em) |
+| `price` | `decimal(15,2)` | NOT NULL | Giá vé áp dụng cho hành khách này |
+| `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm tạo |
+
+---
+
 ### `payments`
 
 Giao dịch thanh toán cho một đơn đặt tour.
@@ -213,6 +228,7 @@ Giao dịch thanh toán cho một đơn đặt tour.
 | `gateway_txn_id` | `varchar` | nullable | Mã giao dịch phía cổng thanh toán, dùng để đối soát |
 | `created_at` | `datetime` | NOT NULL, default `now()` | Thời điểm khởi tạo thanh toán |
 | `paid_at` | `datetime` | nullable | Thời điểm thanh toán thành công |
+| `expire_at` | `datetime` | nullable | Thời điểm hết hạn thanh toán |
 
 > **Không dùng CASCADE DELETE**: lịch sử giao dịch tiền phải được giữ lại, muốn xoá booking thì phải xử lý payments trước.
 
@@ -420,6 +436,14 @@ erDiagram
         enum status
         datetime booked_at
     }
+    booking_details {
+        int booking_detail_id PK
+        int booking_id FK
+        varchar name
+        tinyint age
+        decimal price
+        datetime created_at
+    }
     payments {
         int payment_id PK
         int booking_id FK
@@ -428,6 +452,7 @@ erDiagram
         varchar gateway
         varchar gateway_txn_id
         datetime paid_at
+        datetime expire_at
     }
     reviews {
         int review_id PK
@@ -475,6 +500,7 @@ erDiagram
 
     tour_schedules ||--o{ bookings : "booked_by"
 
+    bookings ||--o{ booking_details : "contains"
     bookings ||--o{ payments : "paid_by"
 
     reviews ||--o{ review_images : "has"

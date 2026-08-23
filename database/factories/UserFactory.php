@@ -25,12 +25,23 @@ class UserFactory extends Factory
         return [
             'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
             // cast 'hashed' trong model sẽ tự hash giá trị này
             'password_hash' => self::DEFAULT_PASSWORD,
             'role' => 'user',
             'status' => 'active',
             'last_login_at' => fake()->optional()->dateTimeBetween('-1 month'),
         ];
+    }
+
+    /**
+     * User chưa xác minh email.
+     */
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
     }
 
     /**

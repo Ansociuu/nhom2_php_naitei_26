@@ -6,20 +6,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class BookingPassenger extends Model
+class BookingDetail extends Model
 {
     use HasFactory;
 
     const UPDATED_AT = null;
 
-    protected $table = 'booking_passengers';
+    protected $table = 'booking_details';
 
-    protected $primaryKey = 'passenger_id';
+    protected $primaryKey = 'booking_detail_id';
+
+    public function getRouteKeyName(): string
+    {
+        return 'booking_detail_id';
+    }
 
     protected $fillable = [
         'booking_id',
-        'full_name',
+        'name',
         'age',
+        'price',
         'phone',
         'seat_no',
         'is_booker',
@@ -29,6 +35,7 @@ class BookingPassenger extends Model
     {
         return [
             'age' => 'integer',
+            'price' => 'decimal:2',
             'is_booker' => 'boolean',
             'created_at' => 'datetime',
         ];

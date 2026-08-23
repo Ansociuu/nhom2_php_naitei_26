@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('gateway_txn_id')->nullable()->comment('mã giao dịch phía cổng thanh toán, dùng để đối soát');
             $table->datetime('created_at')->useCurrent();
             $table->datetime('paid_at')->nullable();
+            $table->datetime('expire_at')->nullable();
 
             $table->foreign('booking_id')
                   ->references('booking_id')

@@ -44,7 +44,7 @@ class SocialAuthController extends Controller
 
         if ($socialAccount) {
             // Already linked — just log in
-            Auth::login($socialAccount->user, remember: true);
+            Auth::login($socialAccount->user);
 
             return redirect()->intended(route('home', absolute: false));
         }
@@ -59,10 +59,12 @@ class SocialAuthController extends Controller
             $user = User::create([
                 'username'  => $this->generateUniqueUsername($socialUser->getName()),
                 'email'     => $email ?? $provider . '_' . $socialUser->getId() . '@placeholder.local',
-                'password_hash' =>  'password', // Default-password;
+                'email_verified_at' => now(),
+                'password_hash' => '', // Social-only accounts have no local password
                 'status'    => 'active',
             ]);
 
+            \Spatie\Permission\Models\Role::findOrCreate('user', 'web');
             $user->assignRole('user');
         }
 
@@ -74,7 +76,7 @@ class SocialAuthController extends Controller
             'linked_at'        => now(),
         ]);
 
-        Auth::login($user, remember: true);
+        Auth::login($user);
 
         return redirect()->intended(route('home', absolute: false));
     }

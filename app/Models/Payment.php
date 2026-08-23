@@ -23,6 +23,7 @@ class Payment extends Model
         'gateway',
         'gateway_txn_id',
         'paid_at',
+        'expire_at',
     ];
 
     protected $hidden = [
@@ -35,6 +36,7 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'created_at' => 'datetime',
             'paid_at' => 'datetime',
+            'expire_at' => 'datetime',
         ];
     }
 

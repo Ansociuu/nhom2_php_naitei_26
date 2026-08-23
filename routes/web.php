@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\TourController as AdminTourController;
+use App\Http\Controllers\Admin\TourImageController;
+use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\Admin\TourScheduleController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TourController;
@@ -37,21 +43,56 @@ Route::get('/dashboard', [HomeController::class, 'dashboard'])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/bank-account', [ProfileController::class, 'updateBankAccount'])->name('profile.bank.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Bookings & Payment Checkout
+    Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/tours/{tour}/book', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/tours/{tour}/book', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-    Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/{booking}/pay', [PaymentController::class, 'checkout'])->name('bookings.pay');
+    Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
 
+    // Reviews
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('/bookings/{booking}/review', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store'])->name('reviews.store');
 });
 
+// Payment
+Route::get('/payments/{txn}/status', [PaymentController::class, 'status'])->name('payments.status');
+
+// Public Mobile QR Code Scan Endpoint
+Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
+
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('categories', CategoryController::class);
+    Route::resource('tours', AdminTourController::class);
+
+     // Tour Images
+    Route::post('tours/{tour}/images', [TourImageController::class, 'store'])->name('tours.images.store');
+    Route::patch('tours/{tour}/images/{image}/cover', [TourImageController::class, 'setCover'])->name('tours.images.cover');
+    Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
+
+    // Tour Itineraries
+    Route::post('tours/{tour}/itineraries', [TourItineraryController::class, 'store'])->name('tours.itineraries.store');
+    Route::put('tours/{tour}/itineraries/{itinerary}', [TourItineraryController::class, 'update'])->name('tours.itineraries.update');
+    Route::delete('tours/{tour}/itineraries/{itinerary}', [TourItineraryController::class, 'destroy'])->name('tours.itineraries.destroy');
+
+    // Tour Schedules
+    Route::post('tours/{tour}/schedules', [TourScheduleController::class, 'store'])->name('tours.schedules.store');
+    Route::put('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'update'])->name('tours.schedules.update');
+    Route::delete('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'destroy'])->name('tours.schedules.destroy');
+});
+
+/**
+ * Quản lý người dùng dùng middleware `admin` (kiểm tra cột users.role) thay vì
+ * `role:admin` của Spatie, vì tài khoản admin hiện được phân quyền qua cột này.
+ */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
