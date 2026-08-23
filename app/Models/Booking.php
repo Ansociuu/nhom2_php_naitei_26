@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
@@ -16,6 +17,11 @@ class Booking extends Model
     protected $table = 'bookings';
 
     protected $primaryKey = 'booking_id';
+
+    public function getRouteKeyName(): string
+    {
+        return 'booking_id';
+    }
 
     protected $fillable = [
         'user_id',
@@ -57,5 +63,10 @@ class Booking extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class, 'booking_id', 'booking_id');
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(BookingDetail::class, 'booking_id', 'booking_id');
     }
 }
