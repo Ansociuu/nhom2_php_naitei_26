@@ -30,6 +30,18 @@ class UserController extends Controller
         return view('admin.users.index', ['users' => $users]);
     }
 
+    /**
+     * Trang sửa một người dùng. `isEditingSelf` để view chặn admin tự hạ quyền
+     * hoặc tự khoá tài khoản của chính mình.
+     */
+    public function edit(Request $request, User $user): View
+    {
+        return view('admin.users.edit', [
+            'user' => $user,
+            'isEditingSelf' => $user->user_id === $request->user()->user_id,
+        ]);
+    }
+
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([

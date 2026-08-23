@@ -1,14 +1,9 @@
 <?php
 
-use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RevenueController;
-use App\Http\Controllers\Admin\TourController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Admin\TourImageController;
 use App\Http\Controllers\Admin\TourItineraryController;
@@ -90,7 +85,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
 
     // Users
-    Route::resource('users', UserController::class)->only(['index', 'edit', 'update', 'destroy']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
 
     // Bookings (Admin)
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show', 'edit', 'update']);
@@ -99,11 +94,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');
 
     // Reviews
-    Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
-    Route::post('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::post('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
-    Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
+    Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+    Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Revenue
     Route::get('revenue', [RevenueController::class, 'index'])->name('revenue.index');
@@ -117,16 +112,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('tours/{tour}/schedules', [TourScheduleController::class, 'store'])->name('tours.schedules.store');
     Route::put('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'update'])->name('tours.schedules.update');
     Route::delete('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'destroy'])->name('tours.schedules.destroy');
-});
-
-/**
- * Quản lý người dùng dùng middleware `admin` (kiểm tra cột users.role) thay vì
- * `role:admin` của Spatie, vì tài khoản admin hiện được phân quyền qua cột này.
- */
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
-    Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__.'/auth.php';
