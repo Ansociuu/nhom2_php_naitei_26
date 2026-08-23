@@ -8,13 +8,23 @@ use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Admin\TourImageController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\Admin\TourScheduleController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/db-viewer', function () {
     $tables = [];
     $tableNames = Schema::getTableListing();
 
@@ -33,9 +43,12 @@ Route::get('/', function () {
     return view('welcome', compact('tables'));
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/tours', [TourController::class, 'index'])->name('tours.index');
+Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
+
+Route::get('/dashboard', [HomeController::class, 'dashboard'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     // Profile
@@ -47,10 +60,15 @@ Route::middleware('auth')->group(function () {
     // Bookings & Payment Checkout
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/tours/{tour}/book', [BookingController::class, 'create'])->name('bookings.create');
-    Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
+    Route::post('/tours/{tour}/book', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::get('/bookings/{booking}/pay', [PaymentController::class, 'checkout'])->name('bookings.pay');
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+
+    // Reviews
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/bookings/{booking}/review', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::post('/bookings/{booking}/review', [ReviewController::class, 'store'])->name('reviews.store');
 });
 
 // Payment
@@ -62,7 +80,7 @@ Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Categories & Tours
     Route::resource('categories', CategoryController::class);
-    Route::resource('tours', TourController::class);
+    Route::resource('tours', AdminTourController::class);
 
     // Tour Images
     Route::post('tours/{tour}/images', [TourImageController::class, 'store'])->name('tours.images.store');
@@ -99,6 +117,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'destroy'])->name('tours.schedules.destroy');
 });
 
+/**
+ * Quản lý người dùng dùng middleware `admin` (kiểm tra cột users.role) thay vì
+ * `role:admin` của Spatie, vì tài khoản admin hiện được phân quyền qua cột này.
+ */
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+});
 
 require __DIR__.'/auth.php';
-

@@ -26,6 +26,9 @@ class BookingDetail extends Model
         'name',
         'age',
         'price',
+        'phone',
+        'seat_no',
+        'is_booker',
     ];
 
     protected function casts(): array
@@ -33,6 +36,7 @@ class BookingDetail extends Model
         return [
             'age' => 'integer',
             'price' => 'decimal:2',
+            'is_booker' => 'boolean',
             'created_at' => 'datetime',
         ];
     }

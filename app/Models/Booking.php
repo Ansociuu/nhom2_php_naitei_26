@@ -26,10 +26,12 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'schedule_id',
+        'ticket_type_id',
         'num_adults',
         'num_children',
         'unit_price',
         'total_amount',
+        'note',
         'status',
         'booked_at',
         'confirmed_at',
@@ -58,6 +60,11 @@ class Booking extends Model
     public function schedule(): BelongsTo
     {
         return $this->belongsTo(TourSchedule::class, 'schedule_id', 'schedule_id');
+    }
+
+    public function ticketType(): BelongsTo
+    {
+        return $this->belongsTo(TicketType::class, 'ticket_type_id', 'ticket_type_id');
     }
 
     public function payment(): HasOne

@@ -18,6 +18,7 @@ class TourImage extends Model
 
     protected $fillable = [
         'tour_id',
+        'image_url',
         'cloudinary_public_id',
         'secure_url',
         'format',
@@ -47,5 +48,10 @@ class TourImage extends Model
     public function tour(): BelongsTo
     {
         return $this->belongsTo(Tour::class, 'tour_id', 'tour_id');
+    }
+
+    public function url(): ?string
+    {
+        return $this->image_url ?? $this->secure_url;
     }
 }

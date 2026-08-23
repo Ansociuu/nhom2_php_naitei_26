@@ -46,7 +46,7 @@ class SocialAuthController extends Controller
             // Already linked — just log in
             Auth::login($socialAccount->user);
 
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('home', absolute: false));
         }
 
         // 2. No social_accounts record yet — check if the email exists in users
@@ -78,7 +78,7 @@ class SocialAuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**

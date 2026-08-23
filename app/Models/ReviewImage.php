@@ -18,6 +18,7 @@ class ReviewImage extends Model
 
     protected $fillable = [
         'review_id',
+        'image_url',
         'cloudinary_public_id',
         'secure_url',
         'format',
@@ -45,5 +46,19 @@ class ReviewImage extends Model
     public function review(): BelongsTo
     {
         return $this->belongsTo(Review::class, 'review_id', 'review_id');
+    }
+
+    /**
+     * image_url lưu đường dẫn tương đối (ảnh người dùng tải lên) hoặc URL đầy đủ.
+     */
+    public function url(): ?string
+    {
+        $path = $this->image_url ?? $this->secure_url;
+
+        if ($path === null || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset($path);
     }
 }

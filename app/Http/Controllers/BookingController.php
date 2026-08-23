@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BookingStoreRequest;
 use App\Models\Booking;
-use App\Models\BookingDetail;
-use App\Models\Payment;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use Illuminate\Http\RedirectResponse;
@@ -16,152 +13,161 @@ use Illuminate\View\View;
 class BookingController extends Controller
 {
     /**
-     * Display the user's booking history with optional status filter.
+     * Lịch sử đặt chỗ của người dùng, có tìm kiếm và lọc.
      */
     public function index(Request $request): View
     {
-        $status = $request->query('status');
-
-        $bookings = Booking::where('user_id', $request->user()->user_id)
-            ->with(['schedule.tour', 'payment', 'details'])
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->orderByDesc('booked_at')
+        $bookings = $request->user()
+            ->bookings()
+            ->with(['schedule.tour.images', 'ticketType', 'payment'])
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $search = $request->string('q');
+                $query->whereHas('schedule.tour', fn ($q) => $q->where('title', 'like', "%{$search}%"));
+            })
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->input('time') === 'upcoming', fn ($q) => $q->whereHas(
+                'schedule',
+                fn ($s) => $s->whereDate('departure_date', '>=', now()->toDateString())
+            ))
+            ->when($request->input('time') === 'past', fn ($q) => $q->whereHas(
+                'schedule',
+                fn ($s) => $s->whereDate('departure_date', '<', now()->toDateString())
+            ))
+            ->latest('booked_at')
             ->paginate(10)
             ->withQueryString();
 
         return view('bookings.index', [
-            'bookings'      => $bookings,
-            'currentStatus' => $status,
+            'bookings' => $bookings,
+            'statusCounts' => $request->user()->bookings()
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status'),
         ]);
     }
 
-    /**
-     * Show the booking form for a specific tour.
-     */
     public function create(Tour $tour): View
     {
-        $schedules = $tour->schedules()
-            ->where('departure_date', '>', now())
-            ->where('available_slots', '>', 0)
-            ->orderBy('departure_date')
-            ->get();
-
-        return view('bookings.create', [
-            'tour'      => $tour,
-            'schedules' => $schedules,
+        $tour->load([
+            'ticketTypes',
+            'schedules' => fn ($query) => $query->where('departure_date', '>=', now()->toDateString())
+                ->orderBy('departure_date'),
         ]);
+
+        return view('bookings.create', ['tour' => $tour]);
     }
 
     /**
-     * Store a new booking with passenger details.
-     * Uses a DB transaction to atomically create the booking, booking details, and decrement available slots.
+     * Tạo đơn đặt chỗ: giá theo loại vé, trẻ dưới 12 tuổi tính nửa giá.
      */
-    public function store(BookingStoreRequest $request): RedirectResponse
+    public function store(Request $request, Tour $tour): RedirectResponse
     {
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'schedule_id' => ['required', 'integer', 'exists:tour_schedules,schedule_id'],
+            'ticket_type_id' => ['required', 'integer', 'exists:ticket_types,ticket_type_id'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'passengers' => ['required', 'array', 'min:1'],
+            'passengers.*.full_name' => ['required', 'string', 'max:255'],
+            'passengers.*.age' => ['nullable', 'integer', 'min:0', 'max:120'],
+            'passengers.*.phone' => ['nullable', 'string', 'max:30'],
+            'passengers.*.seat_no' => ['nullable', 'string', 'max:20'],
+        ]);
 
-        $booking = DB::transaction(function () use ($validated, $request) {
-            $schedule = TourSchedule::with('tour')->lockForUpdate()->find($validated['schedule_id']);
+        $ticketType = $tour->ticketTypes()->findOrFail($validated['ticket_type_id']);
+        $passengers = $validated['passengers'];
 
-            $passengers = $validated['passengers'];
-            $totalGuests = count($passengers);
+        $booking = DB::transaction(function () use ($tour, $validated, $ticketType, $passengers, $request) {
+            $schedule = $tour->schedules()->lockForUpdate()->find($validated['schedule_id']);
 
-            // Double-check slots under lock
-            if ($totalGuests > $schedule->available_slots) {
-                abort(422, 'Không đủ chỗ trống. Vui lòng thử lại.');
+            if (! $schedule || $schedule->available_slots < count($passengers)) {
+                return null;
             }
 
-            // Calculate pricing and classify passengers
-            $unitPrice   = $schedule->price_override ?? $schedule->tour->price;
-            $numAdults   = 0;
+            $unitPrice = (float) $ticketType->price;
+            $numAdults = 0;
             $numChildren = 0;
             $totalAmount = 0;
-            $detailRecords = [];
+            $details = [];
 
-            foreach ($passengers as $p) {
-                $age = intval($p['age']);
-                $isAdult = $age >= 12;
+            foreach ($passengers as $index => $passenger) {
+                $age = isset($passenger['age']) ? (int) $passenger['age'] : null;
+                $isChild = $age !== null && $age < 12;
 
-                if ($isAdult) {
-                    $numAdults++;
-                    $passengerPrice = $unitPrice;
-                } else {
-                    $numChildren++;
-                    $passengerPrice = $unitPrice * 0.5;
-                }
+                $isChild ? $numChildren++ : $numAdults++;
+                $price = $isChild ? $unitPrice * 0.5 : $unitPrice;
+                $totalAmount += $price;
 
-                $totalAmount += $passengerPrice;
-                $detailRecords[] = [
-                    'name'  => trim($p['name']),
-                    'age'   => $age,
-                    'price' => $passengerPrice,
+                $details[] = [
+                    'name' => trim($passenger['full_name']),
+                    'age' => $age ?? 0,
+                    'price' => $price,
+                    'phone' => $passenger['phone'] ?? null,
+                    'seat_no' => $passenger['seat_no'] ?? null,
+                    'is_booker' => $index === 0,
                 ];
             }
 
-            // Create booking record
             $booking = Booking::create([
-                'user_id'      => $request->user()->user_id,
-                'schedule_id'  => $schedule->schedule_id,
-                'num_adults'   => $numAdults,
+                'user_id' => $request->user()->user_id,
+                'schedule_id' => $schedule->schedule_id,
+                'ticket_type_id' => $ticketType->ticket_type_id,
+                'num_adults' => $numAdults,
                 'num_children' => $numChildren,
-                'unit_price'   => $unitPrice,
+                'unit_price' => $unitPrice,
                 'total_amount' => $totalAmount,
-                'status'       => 'pending',
+                'note' => $validated['note'] ?? null,
+                'status' => 'pending',
             ]);
 
-            foreach ($detailRecords as $record) {
-                $booking->details()->create($record);
+            foreach ($details as $detail) {
+                $booking->details()->create($detail);
             }
 
-            $schedule->decrement('available_slots', $totalGuests);
+            $schedule->decrement('available_slots', count($passengers));
 
             return $booking;
         });
 
+        if (! $booking) {
+            return back()->withInput()->with('error', 'Chuyến đi này không còn đủ chỗ trống.');
+        }
+
         return redirect()
             ->route('bookings.pay', $booking)
-            ->with('status', 'booking-created');
+            ->with('status', 'Đặt chỗ thành công! Vui lòng thanh toán để hoàn tất.');
     }
 
-    /**
-     * Display a single booking (invoice / voucher view).
-     */
     public function show(Booking $booking): View
     {
-        // Only the owner can view their booking
         abort_unless($booking->user_id === request()->user()->user_id, 403);
 
-        $booking->load(['schedule.tour', 'payment', 'details']);
+        $booking->load(['schedule.tour', 'ticketType', 'details', 'payment']);
 
-        return view('bookings.show', [
-            'booking' => $booking,
-        ]);
+        return view('bookings.show', ['booking' => $booking]);
     }
 
     /**
-     * Cancel a booking and restore the reserved slots back to the schedule.
+     * Huỷ đơn và trả lại chỗ đã giữ cho lịch khởi hành.
      */
     public function cancel(Booking $booking): RedirectResponse
     {
         abort_unless($booking->user_id === request()->user()->user_id, 403);
 
-        if (! in_array($booking->status, ['pending', 'confirmed'])) {
+        if (! in_array($booking->status, ['pending', 'confirmed'], true)) {
             return back()->withErrors(['status' => 'Không thể hủy đơn đặt tour này.']);
         }
 
         DB::transaction(function () use ($booking) {
             $booking->update([
-                'status'       => 'cancelled',
+                'status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
 
-            // Restore slots to the schedule
-            $totalGuests = $booking->num_adults + $booking->num_children;
-            $booking->schedule()->increment('available_slots', $totalGuests);
+            $booking->schedule()->increment('available_slots', $booking->num_adults + $booking->num_children);
         });
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', 'booking-cancelled');
+            ->with('status', 'Đã hủy đơn đặt chỗ.');
     }
 }
