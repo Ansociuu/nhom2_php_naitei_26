@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Profile\UpdateBankAccountRequest;
+use App\Http\Resources\BankAccountResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -142,6 +144,42 @@ class AuthController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Đổi mật khẩu thành công.',
+        ]);
+    }
+
+    /**
+     * Get the authenticated user's bank account.
+     */
+    public function getBankAccount(Request $request): JsonResponse
+    {
+        $bankAccount = $request->user()->bankAccounts()->first();
+
+        return response()->json([
+            'status'       => 'success',
+            'bank_account' => $bankAccount ? new BankAccountResource($bankAccount) : null,
+        ]);
+    }
+
+    /**
+     * Update or create the authenticated user's bank account.
+     */
+    public function updateBankAccount(UpdateBankAccountRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $bankAccount = $user->bankAccounts()->updateOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'bank_name'           => $request->validated('bank_name'),
+                'account_number'      => $request->validated('account_number'),
+                'account_holder_name' => mb_strtoupper($request->validated('account_holder_name')),
+            ]
+        );
+
+        return response()->json([
+            'status'       => 'success',
+            'message'      => 'Cập nhật tài khoản ngân hàng thành công.',
+            'bank_account' => new BankAccountResource($bankAccount),
         ]);
     }
 

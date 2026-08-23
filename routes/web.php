@@ -1,14 +1,9 @@
 <?php
 
-use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RevenueController;
-use App\Http\Controllers\Admin\TourController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Admin\TourImageController;
 use App\Http\Controllers\Admin\TourItineraryController;
@@ -23,25 +18,6 @@ use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-
-Route::get('/db-viewer', function () {
-    $tables = [];
-    $tableNames = Schema::getTableListing();
-
-    foreach ($tableNames as $tableName) {
-        $columns = Schema::getColumnListing($tableName);
-        $rows = DB::table($tableName)->limit(100)->get();
-
-        $tables[] = [
-            'name' => $tableName,
-            'columns' => $columns,
-            'rows' => $rows,
-            'count' => DB::table($tableName)->count(),
-        ];
-    }
-
-    return view('welcome', compact('tables'));
-});
 
 Route::get('/tours', [TourController::class, 'index'])->name('tours.index');
 Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
@@ -88,7 +64,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
 
     // Users
-    Route::resource('users', UserController::class)->only(['index', 'edit', 'update', 'destroy']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
 
     // Bookings (Admin)
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show', 'edit', 'update']);
@@ -97,11 +73,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');
 
     // Reviews
-    Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
-    Route::post('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::post('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
-    Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
+    Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+    Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Revenue
     Route::get('revenue', [RevenueController::class, 'index'])->name('revenue.index');

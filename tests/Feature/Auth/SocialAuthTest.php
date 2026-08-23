@@ -28,7 +28,7 @@ test('social callback creates user and logs in', function () {
     $user = User::where('email', 'social_test@example.com')->first();
     $this->assertNotNull($user);
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('home', absolute: false));
 
     $this->assertDatabaseHas('users', [
         'email' => 'social_test@example.com',

@@ -203,6 +203,147 @@
           "404": { "description": "Tour không tồn tại hoặc ở trạng thái inactive" }
         }
       }
+    },
+    "/tours/{tour_id}/book": {
+      "post": {
+        "summary": "Đặt tour mới",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "tour_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["schedule_id", "ticket_type_id", "passengers"],
+                "properties": {
+                  "schedule_id": { "type": "integer", "example": 1 },
+                  "ticket_type_id": { "type": "integer", "example": 1 },
+                  "note": { "type": "string", "example": "Yêu cầu ăn chay" },
+                  "passengers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["full_name"],
+                      "properties": {
+                        "full_name": { "type": "string", "example": "Nguyễn Văn A" },
+                        "age": { "type": "integer", "example": 30 },
+                        "phone": { "type": "string", "example": "0901234567" },
+                        "seat_no": { "type": "string", "example": "A1" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Đặt chỗ thành công, trả về thông tin đơn hàng và tổng tiền" },
+          "422": { "description": "Lịch khởi hành không còn đủ chỗ hoặc dữ liệu không hợp lệ" }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "summary": "Lịch sử đặt tour của tài khoản đang đăng nhập",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] } },
+          { "name": "time", "in": "query", "schema": { "type": "string", "enum": ["upcoming", "past"] } },
+          { "name": "keyword", "in": "query", "schema": { "type": "string" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách đơn đặt tour kèm thống kê số lượng theo trạng thái" }
+        }
+      }
+    },
+    "/bookings/{booking_id}": {
+      "get": {
+        "summary": "Xem chi tiết một đơn đặt tour",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thông tin chi tiết đơn hàng, lịch trình và danh sách hành khách" },
+          "403": { "description": "Không có quyền truy cập đơn hàng này" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/cancel": {
+      "post": {
+        "summary": "Hủy đơn đặt tour",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Hủy đơn hàng thành công và hoàn trả chỗ trống" },
+          "422": { "description": "Trạng thái đơn hàng không thể hủy" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/pay": {
+      "get": {
+        "summary": "Khởi tạo / Lấy thông tin mã QR thanh toán cho đơn hàng",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thông tin thanh toán, mã giao dịch, thời gian hết hạn và link mã QR" },
+          "403": { "description": "Không có quyền truy cập đơn hàng này" },
+          "422": { "description": "Đơn hàng không ở trạng thái chờ thanh toán" }
+        }
+      }
+    },
+    "/payments/{txn}/status": {
+      "get": {
+        "summary": "Tra cứu trạng thái giao dịch thanh toán (Polling API)",
+        "parameters": [
+          { "name": "txn", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Trạng thái thanh toán hiện tại (pending, success, failed)" },
+          "404": { "description": "Mã giao dịch không tồn tại" }
+        }
+      }
+    },
+    "/auth/bank-account": {
+      "get": {
+        "summary": "Lấy thông tin tài khoản ngân hàng nhận hoàn tiền của tôi",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thông tin tài khoản ngân hàng hiện tại" }
+        }
+      },
+      "put": {
+        "summary": "Thêm mới / Cập nhật tài khoản ngân hàng nhận hoàn tiền",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["bank_name", "account_number", "account_holder_name"],
+                "properties": {
+                  "bank_name": { "type": "string", "example": "Vietcombank" },
+                  "account_number": { "type": "string", "example": "9876543210" },
+                  "account_holder_name": { "type": "string", "example": "NGUYEN VAN A" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cập nhật tài khoản ngân hàng thành công" }
+        }
+      }
     }
   },
   "components": {
