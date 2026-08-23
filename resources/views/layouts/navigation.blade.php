@@ -15,15 +15,29 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
-                        {{ __('My Bookings') }}
-                    </x-nav-link>
+                    @unless(Auth::user()?->hasRole('admin'))
+                        <x-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
+                            {{ __('My Bookings') }}
+                        </x-nav-link>
+                    @endunless
                     @if(Auth::user()?->hasRole('admin'))
+                        <x-nav-link :href="route('admin.revenue.index')" :active="request()->routeIs('admin.revenue.*')">
+                            {{ __('Doanh thu') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.bookings.index')" :active="request()->routeIs('admin.bookings.*')">
+                            {{ __('Đơn đặt tour') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                            {{ __('Người dùng') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">
                             {{ __('Danh mục') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.tours.index')" :active="request()->routeIs('admin.tours.*')">
                             {{ __('Tour Du lịch') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.reviews.index')" :active="request()->routeIs('admin.reviews.*')">
+                            {{ __('Đánh giá') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -49,9 +63,11 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
-                        <x-dropdown-link :href="route('bookings.index')">
-                            {{ __('My Bookings') }}
-                        </x-dropdown-link>
+                        @unless(Auth::user()?->hasRole('admin'))
+                            <x-dropdown-link :href="route('bookings.index')">
+                                {{ __('My Bookings') }}
+                            </x-dropdown-link>
+                        @endunless
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -85,15 +101,29 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
-                {{ __('My Bookings') }}
-            </x-responsive-nav-link>
+            @unless(Auth::user()?->hasRole('admin'))
+                <x-responsive-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
+                    {{ __('My Bookings') }}
+                </x-responsive-nav-link>
+            @endunless
             @if(Auth::user()?->hasRole('admin'))
+                <x-responsive-nav-link :href="route('admin.revenue.index')" :active="request()->routeIs('admin.revenue.*')">
+                    {{ __('Doanh thu') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.bookings.index')" :active="request()->routeIs('admin.bookings.*')">
+                    {{ __('Đơn đặt tour') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                    {{ __('Người dùng') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">
                     {{ __('Danh mục') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.tours.index')" :active="request()->routeIs('admin.tours.*')">
                     {{ __('Tour Du lịch') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.reviews.index')" :active="request()->routeIs('admin.reviews.*')">
+                    {{ __('Đánh giá') }}
                 </x-responsive-nav-link>
             @endif
         </div>
