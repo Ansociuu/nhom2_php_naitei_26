@@ -16,6 +16,11 @@ class Review extends Model
 
     protected $primaryKey = 'review_id';
 
+    public function getRouteKeyName(): string
+    {
+        return 'review_id';
+    }
+
     protected $fillable = [
         'user_id',
         'tour_id',
