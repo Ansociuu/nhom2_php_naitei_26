@@ -1,0 +1,153 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SUN Booking Tours - User REST API",
+    "description": "Tài liệu API dành cho phía Khách hàng (User Site) - SUN Booking Tours",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/categories": {
+      "get": {
+        "summary": "Lấy danh sách cây danh mục tour",
+        "description": "Trả về danh sách danh mục gốc kèm danh mục con và số lượng tour active trong từng danh mục.",
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "data": [
+                    {
+                      "category_id": 1,
+                      "name": "Du lịch Miền Bắc",
+                      "parent_id": null,
+                      "active_tours_count": 5,
+                      "children": [
+                        {
+                          "category_id": 2,
+                          "name": "Du lịch Hà Nội",
+                          "parent_id": 1,
+                          "active_tours_count": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{category_id}": {
+      "get": {
+        "summary": "Chi tiết danh mục kèm danh sách tour",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Số lượng tour mỗi trang (mặc định 15)",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công"
+          }
+        }
+      }
+    },
+    "/tours": {
+      "get": {
+        "summary": "Lấy danh sách tour đang active với bộ lọc và tìm kiếm",
+        "parameters": [
+          { "name": "keyword", "in": "query", "description": "Tìm kiếm theo từ khóa (tên, mô tả, địa điểm)", "schema": { "type": "string" } },
+          { "name": "category_id", "in": "query", "description": "Lọc theo danh mục", "schema": { "type": "integer" } },
+          { "name": "departure_location", "in": "query", "description": "Lọc theo điểm khởi hành", "schema": { "type": "string" } },
+          { "name": "min_price", "in": "query", "description": "Lọc giá tối thiểu", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "description": "Lọc giá tối đa", "schema": { "type": "number" } },
+          { "name": "duration_days", "in": "query", "description": "Lọc theo số ngày", "schema": { "type": "integer" } },
+          { "name": "available_schedules_only", "in": "query", "description": "Chỉ lấy tour có ngày khởi hành còn chỗ (1 hoặc 0)", "schema": { "type": "boolean" } },
+          { "name": "sort_by", "in": "query", "description": "Sắp xếp: latest | price_asc | price_desc | rating_desc", "schema": { "type": "string" } },
+          { "name": "per_page", "in": "query", "description": "Số lượng mỗi trang (mặc định 15)", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công"
+          }
+        }
+      }
+    },
+    "/tours/featured": {
+      "get": {
+        "summary": "Lấy danh sách Tour nổi bật dựa trên điểm đánh giá (rating) cao nhất",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Số lượng tour muốn lấy (mặc định 6)",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách các tour active được sắp xếp theo điểm rating sao trung bình giảm dần"
+          }
+        }
+      }
+    },
+    "/tours/locations": {
+      "get": {
+        "summary": "Lấy danh sách các điểm khởi hành độc bản",
+        "description": "Trả về mảng danh sách các địa điểm xuất phát duy nhất từ các tour đang active (dùng làm dropdown tìm kiếm).",
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "data": ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tours/{tour_id}": {
+      "get": {
+        "summary": "Xem chi tiết một tour active",
+        "parameters": [
+          {
+            "name": "tour_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về chi tiết tour bao gồm category, images, itineraries, schedules, reviews"
+          },
+          "404": {
+            "description": "Tour không tồn tại hoặc ở trạng thái inactive"
+          }
+        }
+      }
+    }
+  }
+}

@@ -45,4 +45,9 @@ class Category extends Model
     {
         return $this->hasMany(Tour::class, 'category_id', 'category_id');
     }
+
+    public function activeTours(): HasMany
+    {
+        return $this->tours()->where('status', 'active');
+    }
 }
