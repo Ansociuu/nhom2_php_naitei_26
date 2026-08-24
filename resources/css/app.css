@@ -89,4 +89,73 @@
     .btn-sm {
         @apply px-5 py-2.5 text-sm;
     }
+
+    .btn-danger {
+        @apply btn px-6 py-3 border border-red-300 text-red-600 hover:bg-red-50;
+    }
+
+    /* ----- Trang quản trị ----- */
+    .admin-card {
+        @apply bg-white border rounded-2xl;
+    }
+
+    .admin-table {
+        @apply w-full text-sm;
+    }
+
+    .admin-table thead {
+        @apply bg-gray-50 text-gray-500 text-left;
+    }
+
+    .admin-table th {
+        @apply px-5 py-3 font-semibold whitespace-nowrap;
+    }
+
+    .admin-table tbody {
+        @apply divide-y;
+    }
+
+    .admin-table tbody tr {
+        @apply hover:bg-gray-50;
+    }
+
+    .admin-table td {
+        @apply px-5 py-4 align-middle;
+    }
+
+    .badge {
+        @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap;
+    }
+
+    .badge-green {
+        @apply badge bg-emerald-50 text-[#2D5A3D];
+    }
+
+    .badge-amber {
+        @apply badge bg-amber-50 text-amber-700;
+    }
+
+    .badge-red {
+        @apply badge bg-red-50 text-red-600;
+    }
+
+    .badge-blue {
+        @apply badge bg-blue-50 text-blue-700;
+    }
+
+    .badge-gray {
+        @apply badge bg-gray-100 text-gray-600;
+    }
+
+    .stat-card {
+        @apply admin-card p-6 flex items-center gap-5;
+    }
+
+    .stat-value {
+        @apply text-3xl font-bold text-gray-900;
+    }
+
+    .stat-label {
+        @apply text-sm text-gray-500;
+    }
 }

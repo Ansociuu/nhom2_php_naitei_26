@@ -59,7 +59,7 @@
                             @if($user->isSuperAdmin())
                                 <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded-full">👑 Super Admin</span>
                             @elseif($user->role === 'admin')
-                                <span class="px-2 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full">🛡️ Admin</span>
+                                <span class="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-[#2D5A3D] rounded-full">🛡️ Admin</span>
                             @endif
                         </td>
                         <td class="px-4 py-3">{{ $user->email }}</td>
