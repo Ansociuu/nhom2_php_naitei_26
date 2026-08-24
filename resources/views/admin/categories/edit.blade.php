@@ -1,39 +1,33 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Chỉnh sửa Danh mục') }}: {{ $category->name }}
-            </h2>
-            <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg text-sm transition">
+<x-admin-layout title="Chỉnh sửa Danh mục: {{ $category->name }}">
+    <div class="mb-5 flex justify-end gap-3">
+        <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg text-sm transition">
                 ← Quay lại danh sách
             </a>
-        </div>
-    </x-slot>
+    </div>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <div>
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <form method="POST" action="{{ route('admin.categories.update', $category) }}">
                     @csrf
                     @method('PUT')
 
                     <!-- Tên danh mục -->
                     <div class="mb-6">
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
                             Tên danh mục <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="name" id="name" value="{{ old('name', $category->name) }}" required class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <input type="text" name="name" id="name" value="{{ old('name', $category->name) }}" required class="w-full rounded-lg border-gray-300 focus:border-[#2D5A3D] focus:ring-[#2D5A3D] text-sm">
                         @error('name')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Danh mục cha -->
                     <div class="mb-6">
-                        <label for="parent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="parent_id" class="block text-sm font-medium text-gray-700 mb-2">
                             Danh mục cha
                         </label>
-                        <select name="parent_id" id="parent_id" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <select name="parent_id" id="parent_id" class="w-full rounded-lg border-gray-300 focus:border-[#2D5A3D] focus:ring-[#2D5A3D] text-sm">
                             <option value="">-- Không có (Danh mục gốc) --</option>
                             @foreach($parentCategories as $parent)
                                 <option value="{{ $parent->category_id }}" {{ old('parent_id', $category->parent_id) == $parent->category_id ? 'selected' : '' }}>
@@ -42,15 +36,15 @@
                             @endforeach
                         </select>
                         @error('parent_id')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="flex justify-end gap-3">
-                        <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition">
+                        <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg text-sm transition">
                             Hủy
                         </a>
-                        <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm transition">
+                        <button type="submit" class="px-5 py-2 bg-[#2D6A2D] hover:bg-[#245524] text-white font-medium rounded-lg text-sm transition">
                             Cập nhật danh mục
                         </button>
                     </div>
@@ -58,4 +52,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-admin-layout>

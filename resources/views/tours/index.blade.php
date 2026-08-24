@@ -12,6 +12,15 @@
         <p class="page-subtitle">{{ $tours->total() }} cung đường đang mở bán</p>
 
         <form method="GET" action="{{ route('tours.index') }}" class="mt-8 flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[260px]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2">
+                    <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5" stroke-linecap="round"/>
+                </svg>
+                <input type="search" name="q" value="{{ request('q') }}"
+                       placeholder="Tìm theo tên tour, tỉnh thành..." class="form-control pl-10">
+            </div>
+
             <select name="region" class="form-control w-auto min-w-[190px]">
                 <option value="">Tất cả khu vực</option>
                 <option value="mien_bac" @selected(request('region') === 'mien_bac')>Miền Bắc</option>
@@ -36,7 +45,7 @@
 
             <button type="submit" class="btn-primary">Lọc</button>
 
-            @if (request()->anyFilled(['region', 'province', 'difficulty']))
+            @if (request()->anyFilled(['q', 'region', 'province', 'difficulty']))
                 <a href="{{ route('tours.index') }}" class="text-base text-gray-500 hover:text-gray-800">
                     Xoá lọc
                 </a>
