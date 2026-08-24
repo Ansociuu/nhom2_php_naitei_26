@@ -13,6 +13,14 @@ class TourController extends Controller
         $tours = Tour::query()
             ->where('status', 'active')
             ->with(['images', 'ticketTypes'])
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $search = $request->string('q');
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('province', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
             ->when($request->filled('region'), fn ($query) => $query->where('region', $request->string('region')))
             ->when($request->filled('province'), fn ($query) => $query->where('province', $request->string('province')))
             ->when($request->filled('difficulty'), fn ($query) => $query->where('difficulty', $request->integer('difficulty')))
@@ -40,7 +48,14 @@ class TourController extends Controller
             'itineraries' => fn ($query) => $query->orderBy('day_number'),
             'ticketTypes.highlights',
             'schedules' => fn ($query) => $query->where('departure_date', '>=', now()->toDateString())->orderBy('departure_date'),
-            'reviews' => fn ($query) => $query->where('status', 'approved')->with(['user', 'images'])->latest(),
+            'reviews' => fn ($query) => $query->where('status', 'approved')
+                ->with(['user', 'images'])
+                ->withCount('likes')
+                // Đánh dấu review mà người đang xem đã thích, để hiện đúng trạng thái nút.
+                ->when(auth()->check(), fn ($q) => $q->withExists([
+                    'likes as liked_by_me' => fn ($like) => $like->where('review_likes.user_id', auth()->id()),
+                ]))
+                ->latest(),
         ]);
 
         return view('tours.show', ['tour' => $tour]);
