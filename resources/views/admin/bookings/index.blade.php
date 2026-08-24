@@ -113,6 +113,12 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            @if($booking->status === 'pending')
+                                                <form action="{{ route('admin.bookings.confirm', $booking) }}" method="POST" class="inline" onsubmit="return confirm('Xác nhận duyệt đơn này?');">
+                                                    @csrf
+                                                    <button type="submit" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 font-semibold">Duyệt</button>
+                                                </form>
+                                            @endif
                                             <a href="{{ route('admin.bookings.edit', $booking) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">Sửa</a>
                                             <a href="{{ route('admin.bookings.show', $booking) }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">Chi tiết</a>
                                         </td>

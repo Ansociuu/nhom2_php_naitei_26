@@ -12,36 +12,170 @@
     }
   ],
   "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Đăng ký tài khoản người dùng mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "password_confirmation"],
+                "properties": {
+                  "username": { "type": "string", "example": "nguyenvana" },
+                  "email": { "type": "string", "example": "ana@example.com" },
+                  "password": { "type": "string", "example": "password123" },
+                  "password_confirmation": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Đăng ký thành công, trả về access_token và thông tin user"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Đăng nhập tài khoản & lấy Bearer Token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["login", "password"],
+                "properties": {
+                  "login": { "type": "string", "description": "Email hoặc Username", "example": "ana@example.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, trả về access_token và thông tin user" },
+          "403": { "description": "Tài khoản bị khóa hoặc ngưng hoạt động" },
+          "422": { "description": "Sai email/username hoặc mật khẩu" }
+        }
+      }
+    },
+    "/auth/social/{provider}/redirect": {
+      "get": {
+        "summary": "Lấy URL điều hướng đăng nhập tài khoản mạng xã hội (google, facebook, twitter)",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string", "enum": ["google", "facebook", "twitter"] } }
+        ],
+        "responses": {
+          "200": { "description": "Trả về redirect_url chuyển hướng người dùng đăng nhập OAuth" },
+          "422": { "description": "Nhà cung cấp không hợp lệ" }
+        }
+      }
+    },
+    "/auth/social/{provider}/callback": {
+      "post": {
+        "summary": "Xác thực Callback/Token từ mạng xã hội, đăng ký/đăng nhập User và cấp Sanctum Bearer Token",
+        "parameters": [
+          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string", "enum": ["google", "facebook", "twitter"] } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "access_token": { "type": "string", "example": "ya29.a0..." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, trả về access_token và thông tin người dùng" },
+          "400": { "description": "Xác thực với mạng xã hội thất bại" },
+          "403": { "description": "Tài khoản người dùng đã bị khóa" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Lấy thông tin tài khoản đang đăng nhập",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thông tin cá nhân người dùng" },
+          "401": { "description": "Chưa xác thực hoặc Token không hợp lệ" }
+        }
+      }
+    },
+    "/auth/profile": {
+      "put": {
+        "summary": "Cập nhật thông tin cá nhân (username, email)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cập nhật thành công" }
+        }
+      }
+    },
+    "/auth/password": {
+      "put": {
+        "summary": "Đổi mật khẩu tài khoản",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["current_password", "password", "password_confirmation"],
+                "properties": {
+                  "current_password": { "type": "string" },
+                  "password": { "type": "string" },
+                  "password_confirmation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đổi mật khẩu thành công" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Đăng xuất và thu hồi API Token hiện tại",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Đăng xuất thành công" }
+        }
+      }
+    },
     "/categories": {
       "get": {
         "summary": "Lấy danh sách cây danh mục tour",
         "description": "Trả về danh sách danh mục gốc kèm danh mục con và số lượng tour active trong từng danh mục.",
         "responses": {
           "200": {
-            "description": "Thành công",
-            "content": {
-              "application/json": {
-                "example": {
-                  "status": "success",
-                  "data": [
-                    {
-                      "category_id": 1,
-                      "name": "Du lịch Miền Bắc",
-                      "parent_id": null,
-                      "active_tours_count": 5,
-                      "children": [
-                        {
-                          "category_id": 2,
-                          "name": "Du lịch Hà Nội",
-                          "parent_id": 1,
-                          "active_tours_count": 2
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            }
+            "description": "Thành công"
           }
         }
       }
@@ -50,23 +184,11 @@
       "get": {
         "summary": "Chi tiết danh mục kèm danh sách tour",
         "parameters": [
-          {
-            "name": "category_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Số lượng tour mỗi trang (mặc định 15)",
-            "schema": { "type": "integer" }
-          }
+          { "name": "category_id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Thành công"
-          }
+          "200": { "description": "Thành công" }
         }
       }
     },
@@ -74,20 +196,18 @@
       "get": {
         "summary": "Lấy danh sách tour đang active với bộ lọc và tìm kiếm",
         "parameters": [
-          { "name": "keyword", "in": "query", "description": "Tìm kiếm theo từ khóa (tên, mô tả, địa điểm)", "schema": { "type": "string" } },
-          { "name": "category_id", "in": "query", "description": "Lọc theo danh mục", "schema": { "type": "integer" } },
-          { "name": "departure_location", "in": "query", "description": "Lọc theo điểm khởi hành", "schema": { "type": "string" } },
-          { "name": "min_price", "in": "query", "description": "Lọc giá tối thiểu", "schema": { "type": "number" } },
-          { "name": "max_price", "in": "query", "description": "Lọc giá tối đa", "schema": { "type": "number" } },
-          { "name": "duration_days", "in": "query", "description": "Lọc theo số ngày", "schema": { "type": "integer" } },
-          { "name": "available_schedules_only", "in": "query", "description": "Chỉ lấy tour có ngày khởi hành còn chỗ (1 hoặc 0)", "schema": { "type": "boolean" } },
-          { "name": "sort_by", "in": "query", "description": "Sắp xếp: latest | price_asc | price_desc | rating_desc", "schema": { "type": "string" } },
-          { "name": "per_page", "in": "query", "description": "Số lượng mỗi trang (mặc định 15)", "schema": { "type": "integer" } }
+          { "name": "keyword", "in": "query", "schema": { "type": "string" } },
+          { "name": "category_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "departure_location", "in": "query", "schema": { "type": "string" } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "duration_days", "in": "query", "schema": { "type": "integer" } },
+          { "name": "available_schedules_only", "in": "query", "schema": { "type": "boolean" } },
+          { "name": "sort_by", "in": "query", "schema": { "type": "string" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Thành công"
-          }
+          "200": { "description": "Thành công" }
         }
       }
     },
@@ -95,36 +215,18 @@
       "get": {
         "summary": "Lấy danh sách Tour nổi bật dựa trên điểm đánh giá (rating) cao nhất",
         "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Số lượng tour muốn lấy (mặc định 6)",
-            "schema": { "type": "integer" }
-          }
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Danh sách các tour active được sắp xếp theo điểm rating sao trung bình giảm dần"
-          }
+          "200": { "description": "Thành công" }
         }
       }
     },
     "/tours/locations": {
       "get": {
         "summary": "Lấy danh sách các điểm khởi hành độc bản",
-        "description": "Trả về mảng danh sách các địa điểm xuất phát duy nhất từ các tour đang active (dùng làm dropdown tìm kiếm).",
         "responses": {
-          "200": {
-            "description": "Thành công",
-            "content": {
-              "application/json": {
-                "example": {
-                  "status": "success",
-                  "data": ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng"]
-                }
-              }
-            }
-          }
+          "200": { "description": "Thành công" }
         }
       }
     },
@@ -132,21 +234,282 @@
       "get": {
         "summary": "Xem chi tiết một tour active",
         "parameters": [
-          {
-            "name": "tour_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          }
+          { "name": "tour_id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Trả về chi tiết tour bao gồm category, images, itineraries, schedules, reviews"
-          },
-          "404": {
-            "description": "Tour không tồn tại hoặc ở trạng thái inactive"
-          }
+          "200": { "description": "Thành công" },
+          "404": { "description": "Tour không tồn tại hoặc ở trạng thái inactive" }
         }
+      }
+    },
+    "/tours/{tour_id}/book": {
+      "post": {
+        "summary": "Đặt tour mới",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "tour_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["schedule_id", "ticket_type_id", "passengers"],
+                "properties": {
+                  "schedule_id": { "type": "integer", "example": 1 },
+                  "ticket_type_id": { "type": "integer", "example": 1 },
+                  "note": { "type": "string", "example": "Yêu cầu ăn chay" },
+                  "passengers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["full_name"],
+                      "properties": {
+                        "full_name": { "type": "string", "example": "Nguyễn Văn A" },
+                        "age": { "type": "integer", "example": 30 },
+                        "phone": { "type": "string", "example": "0901234567" },
+                        "seat_no": { "type": "string", "example": "A1" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Đặt chỗ thành công, trả về thông tin đơn hàng và tổng tiền" },
+          "422": { "description": "Lịch khởi hành không còn đủ chỗ hoặc dữ liệu không hợp lệ" }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "summary": "Lịch sử đặt tour của tài khoản đang đăng nhập",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] } },
+          { "name": "time", "in": "query", "schema": { "type": "string", "enum": ["upcoming", "past"] } },
+          { "name": "keyword", "in": "query", "schema": { "type": "string" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách đơn đặt tour kèm thống kê số lượng theo trạng thái" }
+        }
+      }
+    },
+    "/bookings/{booking_id}": {
+      "get": {
+        "summary": "Xem chi tiết một đơn đặt tour",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thông tin chi tiết đơn hàng, lịch trình và danh sách hành khách" },
+          "403": { "description": "Không có quyền truy cập đơn hàng này" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/cancel": {
+      "post": {
+        "summary": "Hủy đơn đặt tour",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Hủy đơn hàng thành công và hoàn trả chỗ trống" },
+          "422": { "description": "Trạng thái đơn hàng không thể hủy" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/pay": {
+      "get": {
+        "summary": "Khởi tạo / Lấy thông tin mã QR thanh toán cho đơn hàng",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thông tin thanh toán, mã giao dịch, thời gian hết hạn và link mã QR" },
+          "403": { "description": "Không có quyền truy cập đơn hàng này" },
+          "422": { "description": "Đơn hàng không ở trạng thái chờ thanh toán" }
+        }
+      }
+    },
+    "/payments/{txn}/status": {
+      "get": {
+        "summary": "Tra cứu trạng thái giao dịch thanh toán (Polling API)",
+        "parameters": [
+          { "name": "txn", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Trạng thái thanh toán hiện tại (pending, success, failed)" },
+          "404": { "description": "Mã giao dịch không tồn tại" }
+        }
+      }
+    },
+    "/auth/bank-account": {
+      "get": {
+        "summary": "Lấy thông tin tài khoản ngân hàng nhận hoàn tiền của tôi",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thông tin tài khoản ngân hàng hiện tại" }
+        }
+      },
+      "put": {
+        "summary": "Thêm mới / Cập nhật tài khoản ngân hàng nhận hoàn tiền",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["bank_name", "account_number", "account_holder_name"],
+                "properties": {
+                  "bank_name": { "type": "string", "example": "Vietcombank" },
+                  "account_number": { "type": "string", "example": "9876543210" },
+                  "account_holder_name": { "type": "string", "example": "NGUYEN VAN A" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cập nhật tài khoản ngân hàng thành công" }
+        }
+      }
+    },
+    "/tours/{tour_id}/reviews": {
+      "get": {
+        "summary": "Danh sách các bài đánh giá công khai (status: approved) của một tour",
+        "parameters": [
+          { "name": "tour_id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Thành công, trả về các bài đánh giá, điểm sao, hình ảnh đính kèm và bình luận" }
+        }
+      }
+    },
+    "/reviews/my-reviews": {
+      "get": {
+        "summary": "Lấy danh sách các chuyến đi đã hoàn thành và đánh giá của tôi",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Danh sách chuyến đi chờ đánh giá và các bài đánh giá đã gửi" }
+        }
+      }
+    },
+    "/bookings/{booking_id}/review": {
+      "post": {
+        "summary": "Gửi bài đánh giá kèm hình ảnh cho chuyến đi đã hoàn thành",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "booking_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["score", "content"],
+                "properties": {
+                  "score": { "type": "integer", "enum": [1, 2, 3, 4, 5], "example": 5 },
+                  "content": { "type": "string", "example": "Chuyến đi tuyệt vời, hướng dẫn viên nhiệt tình!" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Gửi đánh giá thành công, chờ Admin duyệt" },
+          "403": { "description": "Không có quyền hoặc chuyến đi chưa kết thúc" }
+        }
+      }
+    },
+    "/reviews/{review_id}/comments": {
+      "post": {
+        "summary": "Bình luận hoặc trả lời bình luận (reply) vào một bài đánh giá",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string", "example": "Bài review rất chi tiết!" },
+                  "parent_comment_id": { "type": "integer", "example": 1, "description": "ID bình luận cha (tùy chọn khi trả lời bình luận)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Thêm bình luận thành công" },
+          "403": { "description": "Bài đánh giá chưa được duyệt" }
+        }
+      }
+    },
+    "/reviews/{review_id}/like": {
+      "post": {
+        "summary": "Thích hoặc bỏ thích (toggle like) bài đánh giá",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Toggle thích/bỏ thích thành công, trả về trạng thái is_liked và tổng lượt thích" },
+          "403": { "description": "Bài đánh giá chưa được duyệt" }
+        }
+      }
+    },
+    "/reviews/{review_id}": {
+      "delete": {
+        "summary": "Xóa bài đánh giá của chính tôi và dọn dẹp các hình ảnh liên quan",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "review_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Xóa bài đánh giá thành công" },
+          "403": { "description": "Không có quyền xóa bài đánh giá này" }
+        }
+      }
+    },
+    "/comments/{comment_id}": {
+      "delete": {
+        "summary": "Xóa bình luận của chính tôi",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "comment_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Xóa bình luận thành công" },
+          "403": { "description": "Không có quyền xóa bình luận này" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum Token"
       }
     }
   }

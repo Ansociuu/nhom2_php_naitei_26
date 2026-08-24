@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
@@ -14,30 +15,23 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\ReviewLikeController;
 use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/db-viewer', function () {
-    $tables = [];
-    $tableNames = Schema::getTableListing();
+// API Documentation Interactive Viewer (Swagger UI)
+Route::get('/api/docs', function () {
+    return view('api-docs');
+})->name('api.docs');
 
-    foreach ($tableNames as $tableName) {
-        $columns = Schema::getColumnListing($tableName);
-        $rows = DB::table($tableName)->limit(100)->get();
-
-        $tables[] = [
-            'name' => $tableName,
-            'columns' => $columns,
-            'rows' => $rows,
-            'count' => DB::table($tableName)->count(),
-        ];
+Route::get('/api/docs/json', function () {
+    $path = base_path('docs/user_api_docs.json');
+    if (! file_exists($path)) {
+        abort(404, 'Tài liệu API JSON không tồn tại.');
     }
-
-    return view('welcome', compact('tables'));
-});
+    return response()->json(json_decode(file_get_contents($path), true));
+})->name('api.docs.json');
 
 Route::get('/tours', [TourController::class, 'index'])->name('tours.index');
 Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
@@ -65,7 +59,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('/bookings/{booking}/review', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store'])->name('reviews.store');
-    Route::post('/reviews/{review}/like', [ReviewLikeController::class, 'toggle'])->name('reviews.like');
 });
 
 // Payment
@@ -75,6 +68,9 @@ Route::get('/payments/{txn}/status', [PaymentController::class, 'status'])->name
 Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Admin Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
     // Categories & Tours
     Route::resource('categories', CategoryController::class);
     Route::resource('tours', AdminTourController::class);
@@ -85,10 +81,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
 
     // Users
-    Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     // Bookings (Admin)
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show', 'edit', 'update']);
+    Route::post('bookings/{booking}/confirm', [AdminBookingController::class, 'confirm'])->name('bookings.confirm');
     Route::post('bookings/{booking}/refund', [AdminBookingController::class, 'refund'])->name('bookings.refund');
     Route::post('bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete');
     Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');
@@ -112,6 +109,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('tours/{tour}/schedules', [TourScheduleController::class, 'store'])->name('tours.schedules.store');
     Route::put('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'update'])->name('tours.schedules.update');
     Route::delete('tours/{tour}/schedules/{schedule}', [TourScheduleController::class, 'destroy'])->name('tours.schedules.destroy');
+});
+
+/**
+ * Quản lý người dùng dùng middleware `admin` (kiểm tra cột users.role) thay vì
+ * `role:admin` của Spatie, vì tài khoản admin hiện được phân quyền qua cột này.
+ */
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__.'/auth.php';

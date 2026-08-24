@@ -271,57 +271,6 @@
                                         @endforeach
                                     </div>
                                 @endif
-
-                                {{-- Lượt thích --}}
-                                <div class="mt-4 pt-3 border-t">
-                                    @auth
-                                        <button type="button"
-                                                x-data="{
-                                                    liked: {{ $review->liked_by_me ?? false ? 'true' : 'false' }},
-                                                    count: {{ $review->likes_count ?? 0 }},
-                                                    busy: false,
-                                                    async toggle() {
-                                                        if (this.busy) return;
-                                                        this.busy = true;
-                                                        try {
-                                                            const res = await fetch('{{ route('reviews.like', $review) }}', {
-                                                                method: 'POST',
-                                                                headers: {
-                                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                                                                    'Accept': 'application/json',
-                                                                },
-                                                            });
-                                                            if (!res.ok) return;
-                                                            const data = await res.json();
-                                                            this.liked = data.liked;
-                                                            this.count = data.count;
-                                                        } finally {
-                                                            this.busy = false;
-                                                        }
-                                                    }
-                                                }"
-                                                @click="toggle()" :disabled="busy"
-                                                :class="liked ? 'text-[#2D5A3D] bg-emerald-50 border-[#2D5A3D]' : 'text-gray-500 border-gray-300 hover:bg-gray-50'"
-                                                class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-sm font-semibold transition disabled:opacity-60">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"
-                                                 class="w-4 h-4" :fill="liked ? 'currentColor' : 'none'">
-                                                <path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3Zm0 0 4.5-7a2.5 2.5 0 0 1 2.4 3.2L13 10h5.2a2 2 0 0 1 2 2.5l-1.7 7a2 2 0 0 1-2 1.5H7"
-                                                      stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            <span x-text="liked ? 'Đã thích' : 'Hữu ích'"></span>
-                                            <span x-show="count > 0" x-text="'· ' + count"></span>
-                                        </button>
-                                    @else
-                                        <span class="inline-flex items-center gap-2 text-sm text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-4 h-4">
-                                                <path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3Zm0 0 4.5-7a2.5 2.5 0 0 1 2.4 3.2L13 10h5.2a2 2 0 0 1 2 2.5l-1.7 7a2 2 0 0 1-2 1.5H7"
-                                                      stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            {{ $review->likes_count ?? 0 }} lượt thích ·
-                                            <a href="{{ route('login') }}" class="text-[#2D5A3D] hover:underline">Đăng nhập để thích</a>
-                                        </span>
-                                    @endauth
-                                </div>
                             </div>
                         @endforeach
                     </div>

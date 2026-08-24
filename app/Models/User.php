@@ -11,12 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $table = 'users';
 
@@ -63,6 +64,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getAuthPassword(): string
     {
         return $this->password_hash;
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là Super Admin (Tài khoản tối cao sáng lập) hay không.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'admin' && ($this->user_id === 1 || strtolower($this->email) === 'admin@sunbooking.vn');
     }
 
     // Relationships
