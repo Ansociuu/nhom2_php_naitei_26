@@ -93,11 +93,11 @@ test('user can submit review with images for completed tour via API', function (
     $response->assertStatus(201)
         ->assertJson([
             'status'  => 'success',
-            'message' => 'Cảm ơn bạn đã đánh giá! Bài viết sẽ hiển thị sau khi được duyệt.',
+            'message' => 'Cảm ơn bạn đã gửi đánh giá! Bài viết đã được đăng công khai.',
             'data'    => [
                 'score'   => 5,
                 'content' => 'Chuyến đi rất vui và hướng dẫn viên nhiệt tình.',
-                'status'  => 'pending',
+                'status'  => 'approved',
             ],
         ]);
 
@@ -105,7 +105,7 @@ test('user can submit review with images for completed tour via API', function (
         'user_id' => $user->user_id,
         'tour_id' => $tour->tour_id,
         'score'   => 5,
-        'status'  => 'pending',
+        'status'  => 'approved',
     ]);
 
     $this->assertDatabaseCount('review_images', 2);

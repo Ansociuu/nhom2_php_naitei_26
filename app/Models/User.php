@@ -66,6 +66,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->password_hash;
     }
 
+    /**
+     * Kiểm tra người dùng có phải là Super Admin (Tài khoản tối cao sáng lập) hay không.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'admin' && ($this->user_id === 1 || strtolower($this->email) === 'admin@sunbooking.vn');
+    }
+
     // Relationships
     public function socialAccounts(): HasMany
     {

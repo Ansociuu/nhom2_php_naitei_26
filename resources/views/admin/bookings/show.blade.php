@@ -206,6 +206,15 @@
                             ✏️ Sửa thông tin
                         </a>
 
+                        @if($booking->status === 'pending')
+                            <form action="{{ route('admin.bookings.confirm', $booking) }}" method="POST" onsubmit="return confirm('Xác nhận duyệt đơn đặt tour này?');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700 focus:bg-emerald-700 active:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    ✓ Xác nhận đơn
+                                </button>
+                            </form>
+                        @endif
+
                         @if($booking->payment && $booking->payment->status === 'success')
                             <form action="{{ route('admin.bookings.refund', $booking) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn HOÀN TIỀN cho đơn này? Trạng thái thanh toán sẽ đổi sang Refunded và đơn đặt tour sẽ bị hủy.');">
                                 @csrf

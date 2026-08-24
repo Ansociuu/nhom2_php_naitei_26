@@ -32,6 +32,10 @@
                         Xoá lọc
                     </a>
                 @endif
+
+                <a href="{{ route('admin.users.create') }}" class="ml-auto px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700">
+                    + Thêm người dùng mới
+                </a>
             </form>
         </div>
 
@@ -50,27 +54,38 @@
                 @forelse ($users as $user)
                     <tr>
                         <td class="px-4 py-3 text-gray-500">#{{ $user->user_id }}</td>
-                        <td class="px-4 py-3 font-medium">{{ $user->username }}</td>
+                        <td class="px-4 py-3 font-medium flex items-center gap-2">
+                            {{ $user->username }}
+                            @if($user->isSuperAdmin())
+                                <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded-full">👑 Super Admin</span>
+                            @elseif($user->role === 'admin')
+                                <span class="px-2 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full">🛡️ Admin</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">{{ $user->email }}</td>
 
                         <td class="px-4 py-3">
-                            <form method="POST" action="{{ route('admin.users.update', $user) }}" class="flex items-center gap-2">
-                                @csrf
-                                @method('PATCH')
+                            @if($user->isSuperAdmin())
+                                <span class="text-xs font-medium text-amber-700">Tối cao (Không thể đổi)</span>
+                            @else
+                                <form method="POST" action="{{ route('admin.users.update', $user) }}" class="flex items-center gap-2">
+                                    @csrf
+                                    @method('PATCH')
 
-                                <select name="role" class="rounded-md border-gray-300 shadow-sm text-xs">
-                                    <option value="admin" @selected($user->role === 'admin')>Admin</option>
-                                    <option value="user" @selected($user->role === 'user')>User</option>
-                                </select>
+                                    <select name="role" class="rounded-md border-gray-300 shadow-sm text-xs">
+                                        <option value="admin" @selected($user->role === 'admin')>Admin</option>
+                                        <option value="user" @selected($user->role === 'user')>User</option>
+                                    </select>
 
-                                <select name="status" class="rounded-md border-gray-300 shadow-sm text-xs">
-                                    <option value="active" @selected($user->status === 'active')>Hoạt động</option>
-                                    <option value="inactive" @selected($user->status === 'inactive')>Ngừng hoạt động</option>
-                                    <option value="banned" @selected($user->status === 'banned')>Đã khoá</option>
-                                </select>
+                                    <select name="status" class="rounded-md border-gray-300 shadow-sm text-xs">
+                                        <option value="active" @selected($user->status === 'active')>Hoạt động</option>
+                                        <option value="inactive" @selected($user->status === 'inactive')>Ngừng hoạt động</option>
+                                        <option value="banned" @selected($user->status === 'banned')>Đã khoá</option>
+                                    </select>
 
-                                <button type="submit" class="text-xs text-blue-600 hover:underline">Lưu</button>
-                            </form>
+                                    <button type="submit" class="text-xs text-blue-600 hover:underline font-semibold">Lưu</button>
+                                </form>
+                            @endif
                         </td>
 
                         <td class="px-4 py-3 text-gray-500">
@@ -78,12 +93,16 @@
                         </td>
 
                         <td class="px-4 py-3 text-right">
-                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
-                                  onsubmit="return confirm('Xoá tài khoản này? Hành động không thể hoàn tác.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-xs text-red-600 hover:underline">Xoá</button>
-                            </form>
+                            @if($user->isSuperAdmin())
+                                <span class="text-xs text-gray-400 italic">Bảo vệ</span>
+                            @else
+                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
+                                      onsubmit="return confirm('Xoá tài khoản này? Hành động không thể hoàn tác.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-red-600 hover:underline">Xoá</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

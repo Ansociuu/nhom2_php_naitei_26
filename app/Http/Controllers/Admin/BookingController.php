@@ -119,6 +119,28 @@ class BookingController extends Controller
         return back()->with('success', 'Đã chuyển trạng thái sang Hoàn tiền (Refunded) và hủy đơn thành công.');
     }
 
+    public function confirm(Booking $booking)
+    {
+        if ($booking->status !== 'pending') {
+            return back()->with('error', 'Chỉ có thể xác nhận đơn đặt tour ở trạng thái chờ xử lý.');
+        }
+
+        DB::transaction(function () use ($booking) {
+            $booking->update([
+                'status' => 'confirmed',
+            ]);
+
+            if ($booking->payment && $booking->payment->status !== 'success') {
+                $booking->payment->update([
+                    'status' => 'success',
+                    'paid_at' => now(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Đã xác nhận đơn đặt tour thành công.');
+    }
+
     public function complete(Booking $booking)
     {
         if ($booking->status !== 'confirmed') {

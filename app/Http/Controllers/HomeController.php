@@ -11,9 +11,13 @@ class HomeController extends Controller
     /**
      * Trang tổng quan tài khoản: thống kê nhanh + chuyến sắp tới + gợi ý tour.
      */
-    public function dashboard(Request $request): View
+    public function dashboard(Request $request)
     {
         $user = $request->user();
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
 
         $upcoming = $user->bookings()
             ->with(['schedule.tour.images', 'ticketType'])

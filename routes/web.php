@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RevenueController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
@@ -18,6 +19,19 @@ use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// API Documentation Interactive Viewer (Swagger UI)
+Route::get('/api/docs', function () {
+    return view('api-docs');
+})->name('api.docs');
+
+Route::get('/api/docs/json', function () {
+    $path = base_path('docs/user_api_docs.json');
+    if (! file_exists($path)) {
+        abort(404, 'Tài liệu API JSON không tồn tại.');
+    }
+    return response()->json(json_decode(file_get_contents($path), true));
+})->name('api.docs.json');
 
 Route::get('/tours', [TourController::class, 'index'])->name('tours.index');
 Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
@@ -54,6 +68,9 @@ Route::get('/payments/{txn}/status', [PaymentController::class, 'status'])->name
 Route::get('/pay/{txn}', [PaymentController::class, 'scan'])->name('pay.scan');
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Admin Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
     // Categories & Tours
     Route::resource('categories', CategoryController::class);
     Route::resource('tours', AdminTourController::class);
@@ -64,10 +81,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('tours/{tour}/images/{image}', [TourImageController::class, 'destroy'])->name('tours.images.destroy');
 
     // Users
-    Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     // Bookings (Admin)
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show', 'edit', 'update']);
+    Route::post('bookings/{booking}/confirm', [AdminBookingController::class, 'confirm'])->name('bookings.confirm');
     Route::post('bookings/{booking}/refund', [AdminBookingController::class, 'refund'])->name('bookings.refund');
     Route::post('bookings/{booking}/complete', [AdminBookingController::class, 'complete'])->name('bookings.complete');
     Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');

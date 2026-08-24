@@ -105,8 +105,8 @@ class ReviewController extends Controller
                 [
                     'score'       => $validated['score'],
                     'content'     => $validated['content'],
-                    'status'      => 'pending',
-                    'approved_at' => null,
+                    'status'      => 'approved',
+                    'approved_at' => now(),
                 ]
             );
 
@@ -131,7 +131,7 @@ class ReviewController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Cảm ơn bạn đã đánh giá! Bài viết sẽ hiển thị sau khi được duyệt.',
+            'message' => 'Cảm ơn bạn đã gửi đánh giá! Bài viết đã được đăng công khai.',
             'data'    => new ReviewResource($review),
         ], 201);
     }
