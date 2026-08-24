@@ -104,23 +104,28 @@
     }
 
     .admin-table thead {
-        @apply bg-gray-50 text-gray-500 text-left;
+        @apply bg-gray-50/70 text-left;
     }
 
     .admin-table th {
-        @apply px-5 py-3 font-semibold whitespace-nowrap;
+        @apply px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap;
     }
 
     .admin-table tbody {
-        @apply divide-y;
+        @apply divide-y divide-gray-100;
     }
 
     .admin-table tbody tr {
-        @apply hover:bg-gray-50;
+        @apply transition-colors hover:bg-gray-50/70;
     }
 
     .admin-table td {
-        @apply px-5 py-4 align-middle;
+        @apply px-5 py-4 align-middle text-gray-700;
+    }
+
+    /* Vùng chứa bảng cho phép cuộn ngang trên màn hình hẹp */
+    .table-wrap {
+        @apply overflow-x-auto;
     }
 
     .badge {
